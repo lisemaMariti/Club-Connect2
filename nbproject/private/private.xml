@@ -3,11 +3,31 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/models/User.java</file>
-            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/ClubConnect.java</file>
-            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/models/Club.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/dao/MembershipDAO.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/utils/CSVExporter.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/ui/MemberDashboard.java</file>
             <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/models/Event.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/utils/NotificationService.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/utils/ThreadPool.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/models/Membership.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/ui/LoginForm.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/models/Notification.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/ui/LeaderDashboard.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/models/User.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/dao/EventDAO.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/utils/PDFExporter.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/ClubConnect.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/models/BudgetRequest.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/dao/ClubDAO.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/dao/BudgetDAO.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/ui/RegisterForm.java</file>
             <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/db/DBManager.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/ui/AdminDashboard.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/models/Room.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/ui/ClubForm.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/dao/UserDAO.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/models/Club.java</file>
+            <file>file:/C:/Users/User/Documents/NetBeansProjects/ClubConnect/src/clubconnect/utils/PasswordUtil.java</file>
         </group>
     </open-files>
 </project-private>

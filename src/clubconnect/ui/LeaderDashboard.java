@@ -3,8 +3,13 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package clubconnect.ui;
+
 import clubconnect.models.User;
 import javax.swing.JOptionPane;
+import clubconnect.dao.ClubDAO;
+import clubconnect.models.Club;
+import javax.swing.*;
+
 /**
  *
  * @author User
@@ -16,6 +21,7 @@ public LeaderDashboard(User user) {
     initComponents();
     setTitle("Leader Dashboard - " + user.getName());
     setLocationRelativeTo(null);
+    checkOrPromptClub();
 //    JOptionPane.showMessageDialog(this, "Welcome, " + user.getName() + " (Leader)");
 }
 
@@ -25,6 +31,24 @@ public LeaderDashboard(User user) {
     public LeaderDashboard() {
         initComponents();
     }
+    private void checkOrPromptClub() {
+    Club club = ClubDAO.getClubByLeaderId(user.getUserId());
+    if (club == null) {
+        int option = JOptionPane.showConfirmDialog(
+                this,
+                "You don't have a club yet. Would you like to create one?",
+                "Create Club",
+                JOptionPane.YES_NO_OPTION
+        );
+        if (option == JOptionPane.YES_OPTION) {
+            new ClubForm().setVisible(true);
+        }
+    } else {
+        // Show their club info
+        jLabel2.setText("Club: " + club.getName() + " (" + club.getStatus() + ")");
+    }
+}
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -38,33 +62,38 @@ public LeaderDashboard(User user) {
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel1 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
-        jButton7 = new javax.swing.JButton();
+        btnEditClubDetails = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
-        jTable3 = new javax.swing.JTable();
-        jButton5 = new javax.swing.JButton();
-        jButton6 = new javax.swing.JButton();
+        tblMembers = new javax.swing.JTable();
+        btnApproveMember = new javax.swing.JButton();
+        btnRejectMember = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
-        jTable2 = new javax.swing.JTable();
-        jButton3 = new javax.swing.JButton();
-        jButton4 = new javax.swing.JButton();
+        tblEvents = new javax.swing.JTable();
+        btnCreateEvent = new javax.swing.JButton();
+        btnMarkAttendance = new javax.swing.JButton();
         jPanel4 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
-        jButton2 = new javax.swing.JButton();
+        tblBudgetRequests = new javax.swing.JTable();
+        btnRequestBudget = new javax.swing.JButton();
         jPanel5 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTextArea1 = new javax.swing.JTextArea();
-        jButton1 = new javax.swing.JButton();
-        jButton8 = new javax.swing.JButton();
+        txtAnnouncements = new javax.swing.JTextArea();
+        btnSendNotification = new javax.swing.JButton();
+        btnLogout = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         jLabel2.setText("Club info");
 
-        jButton7.setText("Edit Club");
+        btnEditClubDetails.setText("Edit Club");
+        btnEditClubDetails.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEditClubDetailsActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -77,7 +106,7 @@ public LeaderDashboard(User user) {
                         .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(169, 169, 169)
-                        .addComponent(jButton7)))
+                        .addComponent(btnEditClubDetails)))
                 .addContainerGap(172, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
@@ -86,13 +115,13 @@ public LeaderDashboard(User user) {
                 .addContainerGap()
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 183, Short.MAX_VALUE)
-                .addComponent(jButton7)
+                .addComponent(btnEditClubDetails)
                 .addGap(31, 31, 31))
         );
 
         jTabbedPane1.addTab("My Club", jPanel1);
 
-        jTable3.setModel(new javax.swing.table.DefaultTableModel(
+        tblMembers.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
                 {null, null, null, null},
@@ -103,11 +132,11 @@ public LeaderDashboard(User user) {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
-        jScrollPane4.setViewportView(jTable3);
+        jScrollPane4.setViewportView(tblMembers);
 
-        jButton5.setText("Approve");
+        btnApproveMember.setText("Approve");
 
-        jButton6.setText("Reject");
+        btnRejectMember.setText("Reject");
 
         jLabel1.setText("pending member requests");
 
@@ -120,9 +149,9 @@ public LeaderDashboard(User user) {
                 .addGap(0, 13, Short.MAX_VALUE))
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGap(51, 51, 51)
-                .addComponent(jButton5)
+                .addComponent(btnApproveMember)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jButton6)
+                .addComponent(btnRejectMember)
                 .addGap(75, 75, 75))
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGap(130, 130, 130)
@@ -138,14 +167,14 @@ public LeaderDashboard(User user) {
                 .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 181, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton5)
-                    .addComponent(jButton6))
+                    .addComponent(btnApproveMember)
+                    .addComponent(btnRejectMember))
                 .addContainerGap(9, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Membership", jPanel2);
 
-        jTable2.setModel(new javax.swing.table.DefaultTableModel(
+        tblEvents.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
                 {null, null, null, null},
@@ -156,11 +185,11 @@ public LeaderDashboard(User user) {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
-        jScrollPane3.setViewportView(jTable2);
+        jScrollPane3.setViewportView(tblEvents);
 
-        jButton3.setText("Create Event");
+        btnCreateEvent.setText("Create Event");
 
-        jButton4.setText("Attendance");
+        btnMarkAttendance.setText("Attendance");
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -170,11 +199,11 @@ public LeaderDashboard(User user) {
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(jButton3)
+                        .addComponent(btnCreateEvent)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButton4)
+                        .addComponent(btnMarkAttendance)
                         .addGap(18, 18, 18)))
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 320, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -187,15 +216,15 @@ public LeaderDashboard(User user) {
                 .addGap(119, 119, 119))
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addGap(52, 52, 52)
-                .addComponent(jButton3)
+                .addComponent(btnCreateEvent)
                 .addGap(31, 31, 31)
-                .addComponent(jButton4)
+                .addComponent(btnMarkAttendance)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Events", jPanel3);
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        tblBudgetRequests.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
                 {null, null, null, null},
@@ -206,9 +235,9 @@ public LeaderDashboard(User user) {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
-        jScrollPane2.setViewportView(jTable1);
+        jScrollPane2.setViewportView(tblBudgetRequests);
 
-        jButton2.setText("Request budget");
+        btnRequestBudget.setText("Request budget");
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
@@ -220,7 +249,7 @@ public LeaderDashboard(User user) {
                 .addContainerGap(7, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jButton2)
+                .addComponent(btnRequestBudget)
                 .addGap(154, 154, 154))
         );
         jPanel4Layout.setVerticalGroup(
@@ -229,17 +258,17 @@ public LeaderDashboard(User user) {
                 .addContainerGap(72, Short.MAX_VALUE)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addComponent(jButton2)
+                .addComponent(btnRequestBudget)
                 .addGap(11, 11, 11))
         );
 
         jTabbedPane1.addTab("Budget", jPanel4);
 
-        jTextArea1.setColumns(20);
-        jTextArea1.setRows(5);
-        jScrollPane1.setViewportView(jTextArea1);
+        txtAnnouncements.setColumns(20);
+        txtAnnouncements.setRows(5);
+        jScrollPane1.setViewportView(txtAnnouncements);
 
-        jButton1.setText("Send to Members");
+        btnSendNotification.setText("Send to Members");
 
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
@@ -252,7 +281,7 @@ public LeaderDashboard(User user) {
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel5Layout.createSequentialGroup()
                         .addGap(50, 50, 50)
-                        .addComponent(jButton1)))
+                        .addComponent(btnSendNotification)))
                 .addContainerGap(207, Short.MAX_VALUE))
         );
         jPanel5Layout.setVerticalGroup(
@@ -261,13 +290,13 @@ public LeaderDashboard(User user) {
                 .addGap(48, 48, 48)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jButton1)
+                .addComponent(btnSendNotification)
                 .addContainerGap(90, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Notifications", jPanel5);
 
-        jButton8.setText("Logout");
+        btnLogout.setText("Logout");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -279,7 +308,7 @@ public LeaderDashboard(User user) {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jButton8)
+                .addComponent(btnLogout)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -288,12 +317,17 @@ public LeaderDashboard(User user) {
                 .addGap(40, 40, 40)
                 .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 294, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 12, Short.MAX_VALUE)
-                .addComponent(jButton8)
+                .addComponent(btnLogout)
                 .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void btnEditClubDetailsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditClubDetailsActionPerformed
+        SwingUtilities.invokeLater(() -> new ClubForm().setVisible(true));
+
+    }//GEN-LAST:event_btnEditClubDetailsActionPerformed
 
     /**
      * @param args the command line arguments
@@ -331,14 +365,14 @@ public LeaderDashboard(User user) {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
-    private javax.swing.JButton jButton4;
-    private javax.swing.JButton jButton5;
-    private javax.swing.JButton jButton6;
-    private javax.swing.JButton jButton7;
-    private javax.swing.JButton jButton8;
+    private javax.swing.JButton btnApproveMember;
+    private javax.swing.JButton btnCreateEvent;
+    private javax.swing.JButton btnEditClubDetails;
+    private javax.swing.JButton btnLogout;
+    private javax.swing.JButton btnMarkAttendance;
+    private javax.swing.JButton btnRejectMember;
+    private javax.swing.JButton btnRequestBudget;
+    private javax.swing.JButton btnSendNotification;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
@@ -351,9 +385,9 @@ public LeaderDashboard(User user) {
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JTabbedPane jTabbedPane1;
-    private javax.swing.JTable jTable1;
-    private javax.swing.JTable jTable2;
-    private javax.swing.JTable jTable3;
-    private javax.swing.JTextArea jTextArea1;
+    private javax.swing.JTable tblBudgetRequests;
+    private javax.swing.JTable tblEvents;
+    private javax.swing.JTable tblMembers;
+    private javax.swing.JTextArea txtAnnouncements;
     // End of variables declaration//GEN-END:variables
 }

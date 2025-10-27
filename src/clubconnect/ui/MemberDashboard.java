@@ -5,7 +5,6 @@
 package clubconnect.ui;
 
 import clubconnect.models.User;
-import javax.swing.JOptionPane;
 
 /**
  *
