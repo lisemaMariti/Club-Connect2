@@ -4,8 +4,16 @@
  */
 package clubconnect.ui;
 
+import clubconnect.dao.ClubDAO;
+import clubconnect.dao.UserDAO;
+import clubconnect.models.Club;
 import clubconnect.models.User;
+import java.util.List;
 import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+
 
 /**
  *
@@ -19,10 +27,95 @@ public class AdminDashboard extends javax.swing.JFrame {
         initComponents(); // keep the GUI setup from NetBeans
         setTitle("Admin Dashboard - " + user.getName());
         setLocationRelativeTo(null);
+        loadClubs();
+        loadUsers();
         
-        // Optional welcome message
-//        JOptionPane.showMessageDialog(this, "Welcome, " + user.getName() + " (Admin)");
+         txtSearch.getDocument().addDocumentListener(new DocumentListener() {
+        @Override
+        public void insertUpdate(DocumentEvent e) {
+            handleSearch();
+        }
+
+        @Override
+        public void removeUpdate(DocumentEvent e) {
+            handleSearch();
+        }
+
+        @Override
+        public void changedUpdate(DocumentEvent e) {
+            handleSearch();
+        }
+
+        private void handleSearch() {
+            String keyword = txtSearch.getText().trim();
+            // Call your search method, e.g.
+            loadSearchedUsers(keyword);
+        }
+    });
+        
     }
+   
+   private void loadClubs() {
+    List<Club> clubs = ClubDAO.getAllClubs(); // your static method
+    String[] columnNames = {"Club ID", "Name", "Description", "Status", "Leader ID"};
+    DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+
+    for (Club c : clubs) {
+        Object[] row = {
+            c.getClubId(),
+            c.getName(),
+            c.getDescription(),
+            c.getStatus(),
+            c.getLeaderId()
+        };
+        model.addRow(row);
+    }
+
+    clublist.setModel(model);
+}
+   
+private void loadUsers() {
+    List<User> users = UserDAO.getAllUsers(); 
+    String[] columnNames = {"User ID", "Name", "Email", "Role", "Active"};
+    DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+
+    for (User u : users) {
+        Object[] row = {
+            u.getUserId(),
+            u.getName(),
+            u.getEmail(),
+            u.getRole(),
+            u.isActive() ? "Yes" : "No"  // <-- fixed
+        };
+        model.addRow(row);
+    }
+
+    UsersList.setModel(model);
+}
+
+private void loadSearchedUsers(String keyword) {
+    List<User> users = UserDAO.searchUsers(keyword); // We'll create this DAO method next
+    String[] columnNames = {"User ID", "Name", "Email", "Role", "Active"};
+    DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+
+    for (User u : users) {
+        Object[] row = {
+            u.getUserId(),
+            u.getName(),
+            u.getEmail(),
+            u.getRole(),
+            u.isActive() ? "Yes" : "No"
+        };
+        model.addRow(row);
+    }
+
+    UsersList.setModel(model);
+}
+
+
+
+
+
    
 
  /**
@@ -47,7 +140,7 @@ public class AdminDashboard extends javax.swing.JFrame {
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel1 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        clublist = new javax.swing.JTable();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
@@ -58,9 +151,13 @@ public class AdminDashboard extends javax.swing.JFrame {
         jButton5 = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
-        jTable3 = new javax.swing.JTable();
-        jButton6 = new javax.swing.JButton();
-        jButton7 = new javax.swing.JButton();
+        UsersList = new javax.swing.JTable();
+        btnDeactivate = new javax.swing.JButton();
+        btnRemoveUser = new javax.swing.JButton();
+        cmbRoles = new javax.swing.JComboBox<>();
+        jLabel1 = new javax.swing.JLabel();
+        txtSearch = new javax.swing.JTextField();
+        btnAssignRole = new javax.swing.JButton();
         jPanel4 = new javax.swing.JPanel();
         jButton8 = new javax.swing.JButton();
         jButton9 = new javax.swing.JButton();
@@ -68,18 +165,18 @@ public class AdminDashboard extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        clublist.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null}
             },
             new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
+                "ClubID", "Name", "Description", "Status", "Leader"
             }
         ));
-        jScrollPane1.setViewportView(jTable1);
+        jScrollPane1.setViewportView(clublist);
 
         jButton1.setText("Add Club");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
@@ -175,7 +272,7 @@ public class AdminDashboard extends javax.swing.JFrame {
 
         jTabbedPane1.addTab("Budgets", jPanel2);
 
-        jTable3.setModel(new javax.swing.table.DefaultTableModel(
+        UsersList.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
                 {null, null, null, null},
@@ -186,37 +283,91 @@ public class AdminDashboard extends javax.swing.JFrame {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
-        jScrollPane3.setViewportView(jTable3);
+        jScrollPane3.setViewportView(UsersList);
 
-        jButton6.setText("Promote Member");
+        btnDeactivate.setText("Activate/Activate A/C");
+        btnDeactivate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnDeactivateActionPerformed(evt);
+            }
+        });
 
-        jButton7.setText("Remove Member");
+        btnRemoveUser.setText("Remove Member");
+        btnRemoveUser.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnRemoveUserActionPerformed(evt);
+            }
+        });
+
+        cmbRoles.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Admin", "Member", "Leader" }));
+        cmbRoles.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbRolesActionPerformed(evt);
+            }
+        });
+
+        jLabel1.setText("Search Users");
+
+        txtSearch.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtSearchActionPerformed(evt);
+            }
+        });
+
+        btnAssignRole.setText("Promote/demote Member");
+        btnAssignRole.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnAssignRoleActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGap(104, 104, 104)
-                .addComponent(jButton6)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jButton7)
-                .addGap(116, 116, 116))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                .addContainerGap(69, Short.MAX_VALUE)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(66, 66, 66))
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel3Layout.createSequentialGroup()
+                        .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addGap(32, 32, 32)
+                                .addComponent(jLabel1))
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtSearch, javax.swing.GroupLayout.PREFERRED_SIZE, 138, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(cmbRoles, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addComponent(btnAssignRole)
+                                .addGap(18, 18, 18)
+                                .addComponent(btnDeactivate)
+                                .addGap(18, 18, 18)
+                                .addComponent(btnRemoveUser)
+                                .addGap(0, 0, Short.MAX_VALUE)))))
+                .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGap(15, 15, 15)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 305, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 305, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtSearch, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(33, 33, 33)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton6)
-                    .addComponent(jButton7))
-                .addContainerGap(63, Short.MAX_VALUE))
+                    .addComponent(btnDeactivate)
+                    .addComponent(btnRemoveUser)
+                    .addComponent(btnAssignRole))
+                .addGap(18, 18, 18)
+                .addComponent(cmbRoles, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(17, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Users", jPanel3);
@@ -256,11 +407,13 @@ public class AdminDashboard extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 587, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(14, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jButton10)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(jButton10))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 587, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 8, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -268,7 +421,7 @@ public class AdminDashboard extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 453, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(24, 24, 24)
+                .addGap(203, 203, 203)
                 .addComponent(jButton10)
                 .addContainerGap())
         );
@@ -283,6 +436,106 @@ public class AdminDashboard extends javax.swing.JFrame {
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_jButton4ActionPerformed
+
+    private void btnRemoveUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveUserActionPerformed
+           int selectedRow = UsersList.getSelectedRow();
+    
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(null, "Please select a user to delete.");
+        return;
+    }
+
+    // Get user ID from table (assuming first column is user ID)
+    int userId = (int) UsersList.getValueAt(selectedRow, 0);
+
+    // Ask for confirmation
+    int confirm = JOptionPane.showConfirmDialog(
+        null, 
+        "Are you sure you want to delete this user?", 
+        "Confirm Delete", 
+        JOptionPane.YES_NO_OPTION
+    );
+
+    if (confirm == JOptionPane.YES_OPTION) {
+        boolean deleted = UserDAO.deleteUser(userId);
+        if (deleted) {
+            JOptionPane.showMessageDialog(null, "User deleted successfully!");
+            // Refresh table
+            loadUsers();
+        } else {
+            JOptionPane.showMessageDialog(null, "Failed to delete user.");
+        }
+    }
+    }//GEN-LAST:event_btnRemoveUserActionPerformed
+
+    private void btnDeactivateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeactivateActionPerformed
+        int selectedRow = UsersList.getSelectedRow();
+    
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, "Please select a user to deactivate.");
+        return;
+    }
+
+    // Get user ID from table (assuming first column is user ID)
+    int userId = (int) UsersList.getValueAt(selectedRow, 0);
+
+    // Ask for confirmation
+    int confirm = JOptionPane.showConfirmDialog(
+        this, 
+        "Are you sure you want to deactivate this user?", 
+        "Confirm Deactivate", 
+        JOptionPane.YES_NO_OPTION
+    );
+
+    if (confirm == JOptionPane.YES_OPTION) {
+        boolean success = UserDAO.deactivateUser(userId); // You need to implement this in DAO
+        if (success) {
+            JOptionPane.showMessageDialog(this, "User deactivated successfully!");
+            loadUsers(); // Refresh table
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to deactivate user.");
+        }
+    }
+    }//GEN-LAST:event_btnDeactivateActionPerformed
+
+    private void btnAssignRoleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAssignRoleActionPerformed
+        int selectedRow = UsersList.getSelectedRow();
+
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, "Please select a user to assign a role.");
+        return;
+    }
+
+    int userId = (int) UsersList.getValueAt(selectedRow, 0); 
+    String selectedRole = cmbRoles.getSelectedItem().toString();
+
+    // Confirm action
+    int confirm = JOptionPane.showConfirmDialog(
+        this,
+        "Are you sure you want to assign the role '" + selectedRole + "' to this user?",
+        "Confirm Role Assignment",
+        JOptionPane.YES_NO_OPTION
+    );
+
+    if (confirm == JOptionPane.YES_OPTION) {
+        boolean success = UserDAO.assignUserRole(userId, selectedRole);
+        if (success) {
+            JOptionPane.showMessageDialog(this, "Role assigned successfully!");
+            loadUsers(); // Refresh the table to show updated role
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to assign role.");
+        }
+    }
+
+    }//GEN-LAST:event_btnAssignRoleActionPerformed
+
+    private void cmbRolesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRolesActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cmbRolesActionPerformed
+
+    private void txtSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtSearchActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtSearchActionPerformed
 
     /**
      * @param args the command line arguments
@@ -320,16 +573,21 @@ public class AdminDashboard extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTable UsersList;
+    private javax.swing.JButton btnAssignRole;
+    private javax.swing.JButton btnDeactivate;
+    private javax.swing.JButton btnRemoveUser;
+    private javax.swing.JTable clublist;
+    private javax.swing.JComboBox<String> cmbRoles;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton10;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
-    private javax.swing.JButton jButton6;
-    private javax.swing.JButton jButton7;
     private javax.swing.JButton jButton8;
     private javax.swing.JButton jButton9;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
@@ -338,8 +596,7 @@ public class AdminDashboard extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JTabbedPane jTabbedPane1;
-    private javax.swing.JTable jTable1;
     private javax.swing.JTable jTable2;
-    private javax.swing.JTable jTable3;
+    private javax.swing.JTextField txtSearch;
     // End of variables declaration//GEN-END:variables
 }

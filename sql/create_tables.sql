@@ -11,15 +11,16 @@
 CREATE DATABASE IF NOT EXISTS clubconnect_db;
 USE clubconnect_db;
 
--- Users Table
 CREATE TABLE IF NOT EXISTS users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(120) NOT NULL,
     email VARCHAR(190) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('Admin','Leader','Member','Guest') DEFAULT 'Guest',
+    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 
 -- Clubs Table
 CREATE TABLE IF NOT EXISTS clubs (

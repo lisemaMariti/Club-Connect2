@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package clubconnect.models;
 
 public class User {
@@ -10,14 +6,17 @@ public class User {
     private String email;
     private String passwordHash;
     private String role;
+    private boolean isActive; // New field
 
-    public User(int userId, String name, String email, String passwordHash, String role) {
-        this.userId = userId;
-        this.name = name;
-        this.email = email;
-        this.passwordHash = passwordHash;
-        this.role = role;
-    }
+public User(int userId, String name, String email, String passwordHash, String role, boolean isActive) {
+    this.userId = userId;
+    this.name = name;
+    this.email = email;
+    this.passwordHash = passwordHash;
+    this.role = role;
+    this.isActive = isActive; // <-- now correctly set from parameter
+}
+
 
     // Getters and setters
     public int getUserId() { return userId; }
@@ -34,4 +33,7 @@ public class User {
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+
+    public boolean isActive() { return isActive; } // Getter for new field
+    public void setActive(boolean isActive) { this.isActive = isActive; } // Setter for new field
 }
