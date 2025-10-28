@@ -5,49 +5,67 @@
 package clubconnect.ui;
 
 import clubconnect.models.User;
-import javax.swing.JOptionPane;
-import clubconnect.dao.ClubDAO;
 import clubconnect.models.Club;
+import clubconnect.dao.ClubDAO;
 import javax.swing.*;
 
-/**
- *
- * @author User
- */
 public class LeaderDashboard extends javax.swing.JFrame {
-     private User user;
-public LeaderDashboard(User user) {
-    this.user = user;
-    initComponents();
-    setTitle("Leader Dashboard - " + user.getName());
-    setLocationRelativeTo(null);
-    checkOrPromptClub();
-//    JOptionPane.showMessageDialog(this, "Welcome, " + user.getName() + " (Leader)");
-}
 
-    /**
-     * Creates new form LeaderDashboard
-     */
+    private User user;
+
+    // ✅ Constructor used when a leader logs in
+    public LeaderDashboard(User user) {
+        this.user = user;
+        initComponents();
+        setTitle("Leader Dashboard - " + user.getName());
+        setLocationRelativeTo(null);
+
+        // 🧠 Check first before showing dashboard
+        Club club = ClubDAO.getClubByLeaderId(user.getUserId());
+        if (club == null) {
+            int option = JOptionPane.showConfirmDialog(
+                    null,
+                    "You don’t have a club yet. Would you like to create one now?",
+                    "Create Club",
+                    JOptionPane.YES_NO_OPTION
+            );
+
+            if (option == JOptionPane.YES_OPTION) {
+                // ✅ Open ClubForm before dashboard appears
+                ClubForm clubForm = new ClubForm(user);
+                clubForm.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                clubForm.setVisible(true);
+
+                // When ClubForm closes, reopen dashboard
+                clubForm.addWindowListener(new java.awt.event.WindowAdapter() {
+                    @Override
+                    public void windowClosed(java.awt.event.WindowEvent e) {
+                        Club createdClub = ClubDAO.getClubByLeaderId(user.getUserId());
+                        if (createdClub != null) {
+                            // now that the club exists, show the dashboard
+                            jLabel2.setText("Club: " + createdClub.getName() + " (" + createdClub.getStatus() + ")");
+                            setVisible(true);
+                        } else {
+                            JOptionPane.showMessageDialog(null, "No club created. Exiting.");
+                            dispose();
+                        }
+                    }
+                });
+            } else {
+                JOptionPane.showMessageDialog(null, "You must create a club to continue.");
+                dispose();
+            }
+        } else {
+            // ✅ Leader already has a club — show dashboard directly
+            jLabel2.setText("Club: " + club.getName() + " (" + club.getStatus() + ")");
+            setVisible(true);
+        }
+    }
+
+    // Default constructor (keep for design view)
     public LeaderDashboard() {
         initComponents();
     }
-    private void checkOrPromptClub() {
-    Club club = ClubDAO.getClubByLeaderId(user.getUserId());
-    if (club == null) {
-        int option = JOptionPane.showConfirmDialog(
-                this,
-                "You don't have a club yet. Would you like to create one?",
-                "Create Club",
-                JOptionPane.YES_NO_OPTION
-        );
-        if (option == JOptionPane.YES_OPTION) {
-            new ClubForm().setVisible(true);
-        }
-    } else {
-        // Show their club info
-        jLabel2.setText("Club: " + club.getName() + " (" + club.getStatus() + ")");
-    }
-}
 
 
     /**

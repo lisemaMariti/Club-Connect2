@@ -6,55 +6,115 @@ package clubconnect.ui;
 
 import clubconnect.dao.ClubDAO;
 import clubconnect.models.Club;
+import clubconnect.models.User;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.util.List;
 
 public class ClubForm extends javax.swing.JFrame {
+    
+     private User user;
+     private boolean isAdmin = false;
 
     /**
      * Creates new form ClubForm
      */
-    public ClubForm() {
-        initComponents();
-        setLocationRelativeTo(null); 
-        setTitle("Club Management");
-        loadClubs("ALL");
-    }
-    
-    // --------------------------
-// Load table data
-// --------------------------
-private void loadClubs(String filter) {
-    DefaultTableModel model = new DefaultTableModel(
-            new Object[]{"ID", "Name", "Description", "Status", "Leader ID"}, 0
-    );
-    List<Club> clubs = ClubDAO.getAllClubs();
+   // ---------- Constructor for Admin ----------
+        public ClubForm() {
+            initComponents();
+            setLocationRelativeTo(null);
+            setTitle("Club Management - Admin");
+            isAdmin = true; // Mark as admin mode
 
-    for (Club c : clubs) {
-        if (filter.equals("ALL") || c.getStatus().equalsIgnoreCase(filter)) {
-            model.addRow(new Object[]{
-                c.getClubId(),
-                c.getName(),
-                c.getDescription(),
-                c.getStatus(),
-                c.getLeaderId()
-            });
+            // Hide create-related controls for admin
+            txtLeaderId.setEnabled(false);
+            txtName.setEnabled(false);
+            txtDescription.setEnabled(false);
+            btnCreate.setVisible(false);
+
+            // Admin sees approve/reject/filter
+            btnApprove.setVisible(true);
+            btnReject.setVisible(true);
+            cbStatusFilter.setVisible(true);
+
+            loadClubs("ALL");
         }
-    }
 
-    tblClubs.setModel(model);
-}
+        // ---------- Constructor for Leader ----------
+        public ClubForm(User user) {
+            initComponents();
+            this.user = user;
+            setLocationRelativeTo(null);
+            setTitle("Create Club - " + user.getName());
+            isAdmin = false;
 
-// --------------------------
-// Reset form fields
-// --------------------------
-private void clearFields() {
-    txtName.setText("");
-    txtDescription.setText("");
-    txtLeaderId.setText("");
-    cbStatusFilter.setSelectedIndex(0);
-}
+            // Leader setup
+            txtLeaderId.setText(String.valueOf(user.getUserId()));
+            txtLeaderId.setEditable(false);
+
+            // Hide Admin-only controls
+            btnApprove.setVisible(false);
+            btnReject.setVisible(false);
+            cbStatusFilter.setVisible(false);
+
+            // Load only this leader’s clubs
+            loadLeaderClubs(user.getUserId());
+        }
+
+
+
+            // --------------------------
+        // Load table data
+        // --------------------------
+        private void loadClubs(String filter) {
+            DefaultTableModel model = new DefaultTableModel(
+                    new Object[]{"ID", "Name", "Description", "Status", "Leader ID"}, 0
+            );
+            List<Club> clubs = ClubDAO.getAllClubs();
+
+            for (Club c : clubs) {
+                if (filter.equals("ALL") || c.getStatus().equalsIgnoreCase(filter)) {
+                    model.addRow(new Object[]{
+                        c.getClubId(),
+                        c.getName(),
+                        c.getDescription(),
+                        c.getStatus(),
+                        c.getLeaderId()
+                    });
+                }
+            }
+
+            tblClubs.setModel(model);
+        }
+        private void loadLeaderClubs(int leaderId) {
+            DefaultTableModel model = new DefaultTableModel(
+                    new Object[]{"ID", "Name", "Description", "Status"}, 0
+            );
+            List<Club> clubs = ClubDAO.getAllClubs();
+
+            for (Club c : clubs) {
+                if (c.getLeaderId() == leaderId) {
+                    model.addRow(new Object[]{
+                        c.getClubId(),
+                        c.getName(),
+                        c.getDescription(),
+                        c.getStatus()
+                    });
+                }
+            }
+
+            tblClubs.setModel(model);
+        }
+
+        // --------------------------
+        // Reset form fields
+        // --------------------------
+        private void clearFields() {
+            txtName.setText("");
+            txtDescription.setText("");
+            txtLeaderId.setText("");
+            cbStatusFilter.setSelectedIndex(0);
+        }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -236,13 +296,27 @@ private void clearFields() {
         return;
     }
 
+    // ✅ Step 1: Check if leader already has a club
+    List<Club> allClubs = ClubDAO.getAllClubs();
+    for (Club c : allClubs) {
+        if (c.getLeaderId() == leaderId) {
+            JOptionPane.showMessageDialog(this, 
+                "You already have a club assigned. Only one club per leader is allowed.");
+            btnCreate.setEnabled(false);  // prevent future clicks
+            return;
+        }
+    }
+
+    // ✅ Step 2: Create the new club
     Club club = new Club(0, name, desc, "Pending", leaderId);
     if (ClubDAO.createClub(club)) {
-        JOptionPane.showMessageDialog(this, "Club creation request submitted successfully.");
-        loadClubs("ALL");
-        clearFields();
+        JOptionPane.showMessageDialog(this, """
+                                            Club creation request submitted successfully.
+                                            Please wait for admin approval.""");
+        dispose(); // ✅ Step 3: Close the form after creation
     } else {
-        JOptionPane.showMessageDialog(this, "Error creating club. It might already exist.");
+        JOptionPane.showMessageDialog(this, 
+            "Error creating club. It might already exist.");
     }
     }//GEN-LAST:event_btnCreateActionPerformed
 
