@@ -113,11 +113,6 @@ private void loadSearchedUsers(String keyword) {
 }
 
 
-
-
-
-   
-
  /**
      * 
      * 
@@ -400,6 +395,11 @@ private void loadSearchedUsers(String keyword) {
         jTabbedPane1.addTab("Reports", jPanel4);
 
         jButton10.setText("Logout");
+        jButton10.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton10ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -536,6 +536,20 @@ private void loadSearchedUsers(String keyword) {
     private void txtSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtSearchActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_txtSearchActionPerformed
+
+    private void jButton10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton10ActionPerformed
+      int confirm = JOptionPane.showConfirmDialog(
+        this, 
+        "Are you sure you want to log out?", 
+        "Confirm Logout", 
+        JOptionPane.YES_NO_OPTION
+    );
+
+    if (confirm == JOptionPane.YES_OPTION) {
+        this.dispose(); // close current dashboard instance
+        new clubconnect.ui.LoginForm().setVisible(true); // open login screen
+    }
+    }//GEN-LAST:event_jButton10ActionPerformed
 
     /**
      * @param args the command line arguments

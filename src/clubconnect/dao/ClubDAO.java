@@ -82,5 +82,21 @@ public class ClubDAO {
     return null;
 }
 
+    public static boolean doesLeaderHaveClub(int leaderId) {
+    String sql = "SELECT COUNT(*) FROM clubs WHERE leader_id = ?";
+    try (Connection conn = DBManager.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+        stmt.setInt(1, leaderId);
+        ResultSet rs = stmt.executeQuery();
+        if (rs.next()) {
+            return rs.getInt(1) > 0;
+        }
+    } catch (SQLException e) {
+        System.err.println("Error checking leader club: " + e.getMessage());
+    }
+    return false;
+}
+
 }
 

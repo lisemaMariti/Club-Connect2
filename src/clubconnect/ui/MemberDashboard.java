@@ -5,6 +5,7 @@
 package clubconnect.ui;
 
 import clubconnect.models.User;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -266,6 +267,11 @@ public MemberDashboard(User user) {
         jTabbedPane1.addTab("Profile", jPanel5);
 
         jButton1.setText("Logout");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -291,6 +297,20 @@ public MemberDashboard(User user) {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+      int confirm = JOptionPane.showConfirmDialog(
+        this, 
+        "Are you sure you want to log out?", 
+        "Confirm Logout", 
+        JOptionPane.YES_NO_OPTION
+    );
+
+    if (confirm == JOptionPane.YES_OPTION) {
+        this.dispose(); // close current dashboard instance
+        new clubconnect.ui.LoginForm().setVisible(true); // open login screen
+    }
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
      * @param args the command line arguments

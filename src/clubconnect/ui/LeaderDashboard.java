@@ -315,6 +315,11 @@ public class LeaderDashboard extends javax.swing.JFrame {
         jTabbedPane1.addTab("Notifications", jPanel5);
 
         btnLogout.setText("Logout");
+        btnLogout.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnLogoutActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -346,6 +351,20 @@ public class LeaderDashboard extends javax.swing.JFrame {
         SwingUtilities.invokeLater(() -> new ClubForm().setVisible(true));
 
     }//GEN-LAST:event_btnEditClubDetailsActionPerformed
+
+    private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogoutActionPerformed
+  int confirm = JOptionPane.showConfirmDialog(
+        this, 
+        "Are you sure you want to log out?", 
+        "Confirm Logout", 
+        JOptionPane.YES_NO_OPTION
+    );
+
+    if (confirm == JOptionPane.YES_OPTION) {
+        this.dispose(); // close current dashboard instance
+        new clubconnect.ui.LoginForm().setVisible(true); // open login screen
+    };
+    }//GEN-LAST:event_btnLogoutActionPerformed
 
     /**
      * @param args the command line arguments

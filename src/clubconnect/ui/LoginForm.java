@@ -4,6 +4,7 @@
  */
 package clubconnect.ui;
 
+import clubconnect.dao.ClubDAO;
 import javax.swing.JOptionPane;
 
 /**
@@ -131,9 +132,18 @@ public class LoginForm extends javax.swing.JFrame {
             case "Admin" -> {
                 new clubconnect.ui.AdminDashboard(user).setVisible(true);
             }
-            case "Leader" -> {
-                new clubconnect.ui.LeaderDashboard(user).setVisible(true);
-            }
+case "Leader" -> {
+    // Check if the leader already has a club
+    boolean hasClub = ClubDAO.doesLeaderHaveClub(user.getUserId());
+
+    if (hasClub) {
+        // Redirect to Leader Dashboard
+        new clubconnect.ui.LeaderDashboard(user).setVisible(true);
+    } else {
+        // Redirect to Club creation form
+        new clubconnect.ui.ClubForm(user).setVisible(true);
+    }
+}
             case "Member" -> {
                 new clubconnect.ui.MemberDashboard(user).setVisible(true);
             }

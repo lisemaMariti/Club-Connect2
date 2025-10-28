@@ -279,7 +279,8 @@ public class ClubForm extends javax.swing.JFrame {
     }//GEN-LAST:event_txtNameActionPerformed
 
     private void btnCreateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCreateActionPerformed
-       String name = txtName.getText().trim();
+                                             
+    String name = txtName.getText().trim();
     String desc = txtDescription.getText().trim();
     String leaderText = txtLeaderId.getText().trim();
 
@@ -296,24 +297,28 @@ public class ClubForm extends javax.swing.JFrame {
         return;
     }
 
-    // ✅ Step 1: Check if leader already has a club
+    // Check if leader already has a club
     List<Club> allClubs = ClubDAO.getAllClubs();
     for (Club c : allClubs) {
         if (c.getLeaderId() == leaderId) {
             JOptionPane.showMessageDialog(this, 
                 "You already have a club assigned. Only one club per leader is allowed.");
-            btnCreate.setEnabled(false);  // prevent future clicks
+            btnCreate.setEnabled(false);
             return;
         }
     }
 
-    // ✅ Step 2: Create the new club
+    // Create the new club
     Club club = new Club(0, name, desc, "Pending", leaderId);
     if (ClubDAO.createClub(club)) {
         JOptionPane.showMessageDialog(this, """
                                             Club creation request submitted successfully.
                                             Please wait for admin approval.""");
-        dispose(); // ✅ Step 3: Close the form after creation
+        dispose(); // Close current form
+
+        // Redirect to Leader Dashboard
+        new clubconnect.ui.LeaderDashboard(user).setVisible(true);
+
     } else {
         JOptionPane.showMessageDialog(this, 
             "Error creating club. It might already exist.");
