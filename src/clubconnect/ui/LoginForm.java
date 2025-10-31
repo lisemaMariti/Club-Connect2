@@ -132,18 +132,18 @@ public class LoginForm extends javax.swing.JFrame {
         // Check if there are any pending clubs
         boolean hasPendingClubs = ClubDAO.hasPendingClubs();
 
-        if (hasPendingClubs) {
-            JOptionPane.showMessageDialog(null,
-                "There are pending clubs awaiting approval.",
-                "Pending Clubs",
-                JOptionPane.INFORMATION_MESSAGE);
-
-            // Redirect admin to the ClubForm view
-            new clubconnect.ui.ClubForm(user).setVisible(true);
-        } else {
+//        if (hasPendingClubs) {
+//            JOptionPane.showMessageDialog(null,
+//                "There are pending clubs awaiting approval.",
+//                "Pending Clubs",
+//                JOptionPane.INFORMATION_MESSAGE);
+//
+//            // Redirect admin to the ClubForm view
+//            new clubconnect.ui.ClubForm(user).setVisible(true);
+//        } else {
             // No pending clubs → go to admin dashboard
             new clubconnect.ui.AdminDashboard(user).setVisible(true);
-        }
+//        }
     
     }
 case "Leader" -> {
