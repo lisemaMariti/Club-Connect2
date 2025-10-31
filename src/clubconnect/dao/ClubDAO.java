@@ -97,6 +97,54 @@ public class ClubDAO {
     }
     return false;
 }
+public static boolean hasPendingClubs() {
+    String sql = "SELECT COUNT(*) FROM clubs WHERE status = 'Pending'";
+    try (Connection conn = DBManager.getConnection();
+         Statement stmt = conn.createStatement();
+         ResultSet rs = stmt.executeQuery(sql)) {
+
+        if (rs.next()) {
+            return rs.getInt(1) > 0;
+        }
+
+    } catch (SQLException e) {
+        System.err.println("Error checking pending clubs: " + e.getMessage());
+    }
+    return false;
+}
+
+public static boolean approveClub(int clubId) {
+    String sql = "UPDATE clubs SET status = 'Active' WHERE club_id = ?";
+    try (Connection conn = DBManager.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+        stmt.setInt(1, clubId);
+        return stmt.executeUpdate() > 0;
+
+    } catch (SQLException e) {
+        System.err.println("Error approving club: " + e.getMessage());
+        return false;
+    }
+}
+
+public static int getClubIdByLeader(int leaderId) {
+    String query = "SELECT club_id FROM clubs WHERE leader_id = ?";
+    try (Connection conn = DBManager.getConnection();
+         PreparedStatement ps = conn.prepareStatement(query)) {
+
+        ps.setInt(1, leaderId);
+        ResultSet rs = ps.executeQuery();
+
+        if (rs.next()) {
+            return rs.getInt("club_id");
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return 0; 
+}
+
 
 }
 

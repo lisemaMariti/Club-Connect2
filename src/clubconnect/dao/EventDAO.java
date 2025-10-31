@@ -12,22 +12,24 @@ import java.util.List;
 
 public class EventDAO {
 
-    public static boolean createEvent(Event event) {
-        String sql = "INSERT INTO events (club_id, name, description, event_date, room_id, capacity) VALUES (?, ?, ?, ?, ?, ?)";
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, event.getClubId());
-            ps.setString(2, event.getName());
-            ps.setString(3, event.getDescription());
-            ps.setTimestamp(4, new Timestamp(event.getEventDate().getTime()));
-            ps.setInt(5, event.getRoomId());
-            ps.setInt(6, event.getCapacity());
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            System.err.println("Error creating event: " + e.getMessage());
-            return false;
-        }
+  public static boolean createEvent(Event event, int clubId) {
+    String sql = "INSERT INTO events (club_id, name, description, event_date, room_id) VALUES (?, ?, ?, ?, ?)";
+    try (Connection conn = DBManager.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setInt(1, clubId); 
+        ps.setString(2, event.getName());
+        ps.setString(3, event.getDescription());
+        ps.setTimestamp(4, new Timestamp(event.getEventDate().getTime()));
+        ps.setInt(5, event.getRoomId());
+
+        return ps.executeUpdate() > 0;
+    } catch (SQLException e) {
+        System.err.println("Error creating event: " + e.getMessage());
+        return false;
     }
+}
+
 
     public static List<Event> getEventsByClub(int clubId) {
         List<Event> list = new ArrayList<>();
@@ -43,13 +45,79 @@ public class EventDAO {
                         rs.getString("name"),
                         rs.getString("description"),
                         rs.getTimestamp("event_date"),
-                        rs.getInt("room_id"),
-                        rs.getInt("capacity")
+                        rs.getInt("room_id")
                 ));
             }
         } catch (SQLException e) {
             System.err.println("Error loading events: " + e.getMessage());
         }
         return list;
+    }
+    
+    public static List<Event> getEventsByClubId(int clubId) {
+        List<Event> events = new ArrayList<>();
+        String query = "SELECT e.event_id, e.name, e.description, e.event_date, r.name AS room_name " +
+                       "FROM events e " +
+                       "JOIN rooms r ON e.room_id = r.room_id " +
+                       "WHERE e.club_id = ?";
+
+        try (Connection conn = DBManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+
+            ps.setInt(1, clubId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Event ev = new Event(
+                    rs.getInt("event_id"),
+                    clubId,
+                    rs.getString("name"),
+                    rs.getString("description"),
+                    rs.getDate("event_date"),
+                    0 // roomId not needed here
+                );
+                ev.setRoomName(rs.getString("room_name")); 
+                events.add(ev);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return events;
+    }
+    public static List<Event> getEventsForMember(int memberId) {
+        List<Event> events = new ArrayList<>();
+        
+        String query = "SELECT e.event_id, e.name, e.description, e.event_date, r.name AS room_name, e.club_id " +
+                       "FROM events e " +
+                       "JOIN rooms r ON e.room_id = r.room_id " +
+                       "JOIN memberships m ON e.club_id = m.club_id " +
+                       "WHERE m.user_id = ? AND m.status = 'Active'";
+
+        try (Connection conn = DBManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+
+            ps.setInt(1, memberId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Event ev = new Event(
+                    rs.getInt("event_id"),
+                    rs.getInt("club_id"),
+                    rs.getString("name"),
+                    rs.getString("description"),
+                    rs.getTimestamp("event_date"),
+                    0 // roomId not needed if only showing room name
+                );
+                ev.setRoomName(rs.getString("room_name"));
+                events.add(ev);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return events;
     }
 }

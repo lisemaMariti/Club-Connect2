@@ -11,16 +11,18 @@ public class Notification {
     private int userId;
     private String message;
     private Timestamp sentAt;
+    private int clubId;
 
-    public Notification(int notificationId, int userId, String message, Timestamp sentAt) {
+    public Notification(int notificationId, int userId, String message, Timestamp sentAt,int clubId) {
         this.notificationId = notificationId;
         this.userId = userId;
         this.message = message;
         this.sentAt = sentAt;
+        this.clubId=clubId;
     }
 
-    public Notification(int userId, String message) {
-        this(0, userId, message, null);
+    public Notification(int userId, String message,int clubId) {
+        this(0, userId, message, null,clubId);
     }
 
     public int getNotificationId() { return notificationId; }
@@ -34,5 +36,14 @@ public class Notification {
 
     public Timestamp getSentAt() { return sentAt; }
     public void setSentAt(Timestamp sentAt) { this.sentAt = sentAt; }
+
+    public int getClubId() {
+        return clubId;
+    }
+
+    public void setClubId(int clubId) {
+        this.clubId = clubId;
+    }
+    
 }
 

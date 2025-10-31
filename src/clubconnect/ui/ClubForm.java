@@ -13,53 +13,74 @@ import java.util.List;
 
 public class ClubForm extends javax.swing.JFrame {
     
-     private User user;
-     private boolean isAdmin = false;
+ private User user;
+private boolean isAdmin = false;
 
-    /**
-     * Creates new form ClubForm
-     */
-   // ---------- Constructor for Admin ----------
-        public ClubForm() {
-            initComponents();
-            setLocationRelativeTo(null);
-            setTitle("Club Management - Admin");
-            isAdmin = true; // Mark as admin mode
+/**
+ * Creates new form ClubForm
+ */
 
-            // Hide create-related controls for admin
-            txtLeaderId.setEnabled(false);
-            txtName.setEnabled(false);
-            txtDescription.setEnabled(false);
-            btnCreate.setVisible(false);
+// ---------- Constructor for Admin ----------
+public ClubForm() {
+    initComponents();
+    setLocationRelativeTo(null);
+    setTitle("Club Management - Admin");
+    isAdmin = true;
 
-            // Admin sees approve/reject/filter
-            btnApprove.setVisible(true);
-            btnReject.setVisible(true);
-            cbStatusFilter.setVisible(true);
+    // ✅ Hide leader-only components
+    txtLeaderId.setVisible(false);
+    txtName.setVisible(false);
+    txtDescription.setVisible(false);
+    btnCreate.setVisible(false);
 
-            loadClubs("ALL");
-        }
+    // ✅ Show admin-only components
+    btnApprove.setVisible(true);
+    btnReject.setVisible(true);
+    cbStatusFilter.setVisible(true);
 
-        // ---------- Constructor for Leader ----------
-        public ClubForm(User user) {
-            initComponents();
-            this.user = user;
-            setLocationRelativeTo(null);
-            setTitle("Create Club - " + user.getName());
-            isAdmin = false;
+    // ✅ Load all clubs
+    loadClubs("ALL");
 
-            // Leader setup
-            txtLeaderId.setText(String.valueOf(user.getUserId()));
-            txtLeaderId.setEditable(false);
+    // ✅ Ensure UI refresh (important for NetBeans forms)
+    SwingUtilities.invokeLater(() -> {
+        revalidate();
+        repaint();
+    });
+}
 
-            // Hide Admin-only controls
-            btnApprove.setVisible(false);
-            btnReject.setVisible(false);
-            cbStatusFilter.setVisible(false);
+// ---------- Constructor for Leader ----------
+public ClubForm(User user) {
+    initComponents();
+    this.user = user;
+    setLocationRelativeTo(null);
+    setTitle("Create Club - " + user.getName());
+    isAdmin = false;
 
-            // Load only this leader’s clubs
-            loadLeaderClubs(user.getUserId());
-        }
+    // ✅ Leader setup
+    txtLeaderId.setText(String.valueOf(user.getUserId()));
+    txtLeaderId.setEditable(false);
+
+    // ✅ Hide admin-only components
+    btnApprove.setVisible(false);
+    btnReject.setVisible(false);
+    cbStatusFilter.setVisible(false);
+
+    // ✅ Show leader-only components
+    txtLeaderId.setVisible(true);
+    txtName.setVisible(true);
+    txtDescription.setVisible(true);
+    btnCreate.setVisible(true);
+
+    // ✅ Load only leader’s clubs
+    loadLeaderClubs(user.getUserId());
+
+    // ✅ Refresh UI
+    SwingUtilities.invokeLater(() -> {
+        revalidate();
+        repaint();
+    });
+}
+
 
 
 

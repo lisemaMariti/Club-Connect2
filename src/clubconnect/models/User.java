@@ -6,7 +6,8 @@ public class User {
     private String email;
     private String passwordHash;
     private String role;
-    private boolean isActive; // New field
+    private boolean isActive; 
+     private int clubId;
 
 public User(int userId, String name, String email, String passwordHash, String role, boolean isActive) {
     this.userId = userId;
@@ -34,6 +35,17 @@ public User(int userId, String name, String email, String passwordHash, String r
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
 
-    public boolean isActive() { return isActive; } // Getter for new field
-    public void setActive(boolean isActive) { this.isActive = isActive; } // Setter for new field
+    public boolean isActive() { return isActive; } 
+    public void setActive(boolean isActive) { this.isActive = isActive; }
+
+    public int getClubId() {
+        return clubId;
+    }
+
+    public void setClubId(int clubId) {
+        this.clubId = clubId;
+    }
+    
+    
+    
 }

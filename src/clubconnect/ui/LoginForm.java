@@ -127,11 +127,25 @@ public class LoginForm extends javax.swing.JFrame {
 //        JOptionPane.showMessageDialog(this, "Welcome, " + user.getName() + "!");
         this.dispose(); // Close the login form
 
-        // 🚀 Switch to the correct dashboard based on the role column from users table
-        switch (user.getRole()) {
-            case "Admin" -> {
-                new clubconnect.ui.AdminDashboard(user).setVisible(true);
-            }
+    switch (user.getRole()) {
+    case "Admin" -> {
+        // Check if there are any pending clubs
+        boolean hasPendingClubs = ClubDAO.hasPendingClubs();
+
+        if (hasPendingClubs) {
+            JOptionPane.showMessageDialog(null,
+                "There are pending clubs awaiting approval.",
+                "Pending Clubs",
+                JOptionPane.INFORMATION_MESSAGE);
+
+            // Redirect admin to the ClubForm view
+            new clubconnect.ui.ClubForm(user).setVisible(true);
+        } else {
+            // No pending clubs → go to admin dashboard
+            new clubconnect.ui.AdminDashboard(user).setVisible(true);
+        }
+    
+    }
 case "Leader" -> {
     // Check if the leader already has a club
     boolean hasClub = ClubDAO.doesLeaderHaveClub(user.getUserId());

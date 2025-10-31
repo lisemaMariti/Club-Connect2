@@ -4,8 +4,19 @@
  */
 package clubconnect.ui;
 
+import clubconnect.dao.ClubDAO;
+import clubconnect.dao.EventDAO;
+import clubconnect.dao.MembershipDAO;
+import clubconnect.dao.NotificationDAO;
+import clubconnect.models.Club;
+import clubconnect.models.Event;
+import clubconnect.models.Notification;
 import clubconnect.models.User;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.List;
 import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
 
 /**
  *
@@ -18,14 +29,79 @@ public MemberDashboard(User user) {
     initComponents();
     setTitle("Member Dashboard - " + user.getName());
     setLocationRelativeTo(null);
-//    JOptionPane.showMessageDialog(this, "Welcome, " + user.getName() + " (Member)");
+       loadClubList();
+       populateEventTableForMember();
+        loadNotifications();
+
+       
+       btnApply.addActionListener(new ActionListener() {
+    @Override
+    public void actionPerformed(ActionEvent evt) {
+        btnApplyActionPerformed(evt);
+    }
+});
 }
     /**
      * Creates new form MemberDashboard
      */
     public MemberDashboard() {
         initComponents();
+        loadClubList();
+       
     }
+    
+    private void loadClubList() {
+    List<Club> clubs = ClubDAO.getAllClubs(); // Fetch from DB
+    String[] columnNames = {"Club ID", "Name", "Description", "Status", "Leader ID"};
+    DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+
+    for (Club c : clubs) {
+        Object[] row = {
+            c.getClubId(),
+            c.getName(),
+            c.getDescription(),
+            c.getStatus(),
+            c.getLeaderId()
+        };
+        model.addRow(row);
+    }
+
+    clubList.setModel(model); 
+}
+    
+  private void populateEventTableForMember() {
+    if (user == null) {
+        return; // safety check
+    }
+
+    DefaultTableModel model = (DefaultTableModel) tblEvents.getModel();
+    model.setRowCount(0);
+
+    // Use the user object you already have
+    List<Event> events = EventDAO.getEventsForMember(user.getUserId());
+
+    for (Event e : events) {
+        model.addRow(new Object[]{
+            e.getName(),
+            e.getDescription(),
+            e.getEventDate(),
+            e.getRoomName()
+        });
+    }
+}
+private void loadNotifications() {
+    txtAnnouncements.setText(""); 
+
+    List<Notification> notifications = NotificationDAO.getNotificationsForMember(user.getUserId());
+
+    for (Notification n : notifications) {
+        String line = "[" + n.getSentAt() + "] Club ID " + n.getClubId() + ": " + n.getMessage() + "\n";
+        txtAnnouncements.append(line);
+    }
+}
+
+
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -39,18 +115,18 @@ public MemberDashboard(User user) {
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel1 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
-        jButton2 = new javax.swing.JButton();
+        clubList = new javax.swing.JTable();
+        btnApply = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
-        jTable2 = new javax.swing.JTable();
+        tblEvents = new javax.swing.JTable();
         jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
-        jTextArea1 = new javax.swing.JTextArea();
+        txtAnnouncements = new javax.swing.JTextArea();
         jLabel3 = new javax.swing.JLabel();
         jPanel4 = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
@@ -64,7 +140,7 @@ public MemberDashboard(User user) {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        clubList.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
                 {null, null, null, null},
@@ -75,9 +151,14 @@ public MemberDashboard(User user) {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
-        jScrollPane1.setViewportView(jTable1);
+        jScrollPane1.setViewportView(clubList);
 
-        jButton2.setText("Apply");
+        btnApply.setText("Apply");
+        btnApply.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnApplyActionPerformed(evt);
+            }
+        });
 
         jLabel1.setText("all active clubs");
 
@@ -93,7 +174,7 @@ public MemberDashboard(User user) {
                         .addContainerGap())
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(jButton2)
+                        .addComponent(btnApply)
                         .addGap(195, 195, 195))))
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(200, 200, 200)
@@ -108,13 +189,13 @@ public MemberDashboard(User user) {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 294, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jButton2)
+                .addComponent(btnApply)
                 .addContainerGap())
         );
 
         jTabbedPane1.addTab("Browse Clubs", jPanel1);
 
-        jTable2.setModel(new javax.swing.table.DefaultTableModel(
+        tblEvents.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
                 {null, null, null, null},
@@ -122,10 +203,10 @@ public MemberDashboard(User user) {
                 {null, null, null, null}
             },
             new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
+                "Name", "Description", "Date", "Room"
             }
         ));
-        jScrollPane2.setViewportView(jTable2);
+        jScrollPane2.setViewportView(tblEvents);
 
         jButton3.setText("RSVP");
 
@@ -168,9 +249,9 @@ public MemberDashboard(User user) {
 
         jTabbedPane1.addTab("My Events", jPanel2);
 
-        jTextArea1.setColumns(20);
-        jTextArea1.setRows(5);
-        jScrollPane3.setViewportView(jTextArea1);
+        txtAnnouncements.setColumns(20);
+        txtAnnouncements.setRows(5);
+        jScrollPane3.setViewportView(txtAnnouncements);
 
         jLabel3.setText("club announcements");
 
@@ -312,6 +393,57 @@ public MemberDashboard(User user) {
     }
     }//GEN-LAST:event_jButton1ActionPerformed
 
+    private void btnApplyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnApplyActionPerformed
+                                                
+                                         
+    int selectedRow = clubList.getSelectedRow();
+
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, 
+            "Please select a club to apply for.", 
+            "No Club Selected", 
+            JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+
+    int clubId = (int) clubList.getValueAt(selectedRow, 0);
+
+    if (user == null) {
+        JOptionPane.showMessageDialog(this, 
+            "You must be logged in to apply for a club.", 
+            "Error", 
+            JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    int userId = user.getUserId();
+
+    int confirm = JOptionPane.showConfirmDialog(
+        this,
+        "Are you sure you want to apply for this club?",
+        "Confirm Application",
+        JOptionPane.YES_NO_OPTION
+    );
+
+    if (confirm == JOptionPane.YES_OPTION) {
+        boolean success = MembershipDAO.requestMembership(userId, clubId);
+
+        if (success) {
+            JOptionPane.showMessageDialog(this, 
+                "Membership request submitted successfully!\nPlease wait for approval.",
+                "Success",
+                JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, 
+                "Failed to submit membership request. You may have already applied.",
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+
+    }//GEN-LAST:event_btnApplyActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -348,8 +480,9 @@ public MemberDashboard(User user) {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnApply;
+    private javax.swing.JTable clubList;
     private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
@@ -369,9 +502,8 @@ public MemberDashboard(User user) {
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JTabbedPane jTabbedPane1;
-    private javax.swing.JTable jTable1;
-    private javax.swing.JTable jTable2;
-    private javax.swing.JTextArea jTextArea1;
     private javax.swing.JTextArea jTextArea2;
+    private javax.swing.JTable tblEvents;
+    private javax.swing.JTextArea txtAnnouncements;
     // End of variables declaration//GEN-END:variables
 }

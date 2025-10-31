@@ -13,17 +13,17 @@ public class Event {
     private String description;
     private Date eventDate;
     private int roomId;
-    private int capacity;
+    private String RoomName;
 
     // Constructor
-    public Event(int eventId, int clubId, String name, String description, Date eventDate, int roomId, int capacity) {
+    public Event(int eventId, int clubId, String name, String description, Date eventDate, int roomId) {
         this.eventId = eventId;
         this.clubId = clubId;
         this.name = name;
         this.description = description;
         this.eventDate = eventDate;
         this.roomId = roomId;
-        this.capacity = capacity;
+      
     }
 
     // Getters/setters
@@ -45,7 +45,17 @@ public class Event {
     public int getRoomId() { return roomId; }
     public void setRoomId(int roomId) { this.roomId = roomId; }
 
-    public int getCapacity() { return capacity; }
-    public void setCapacity(int capacity) { this.capacity = capacity; }
+    public String getRoomName() {
+        return RoomName;
+    }
+
+    public void setRoomName(String RoomName) {
+        this.RoomName = RoomName;
+    }
+
+    
+
+    
+     
 }
 

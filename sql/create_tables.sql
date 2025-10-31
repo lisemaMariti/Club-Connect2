@@ -83,11 +83,12 @@ CREATE TABLE IF NOT EXISTS budget_requests (
     FOREIGN KEY (event_id) REFERENCES events(event_id)
 );
 
--- Notifications Table
 CREATE TABLE IF NOT EXISTS notifications (
     notification_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
+    club_id INT,
     message TEXT NOT NULL,
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (club_id) REFERENCES clubs(club_id)
 );

@@ -6,12 +6,12 @@ package clubconnect.models;
 
 public class Room {
     private int roomId;
-    private String name;
+    private String RoomName;
     private int capacity;
 
-    public Room(int roomId, String name, int capacity) {
+    public Room(int roomId, String RoomName, int capacity) {
         this.roomId = roomId;
-        this.name = name;
+        this.RoomName = RoomName;
         this.capacity = capacity;
     }
 
@@ -22,13 +22,13 @@ public class Room {
     public int getRoomId() { return roomId; }
     public void setRoomId(int roomId) { this.roomId = roomId; }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public String getRoomName() { return RoomName; }
+    public void setName(String RoomName) { this.RoomName = RoomName; }
 
     public int getCapacity() { return capacity; }
     public void setCapacity(int capacity) { this.capacity = capacity; }
 
     @Override
-    public String toString() { return name + " (" + capacity + ")"; }
+    public String toString() { return RoomName + " (" + capacity + ")"; }
 }
 
