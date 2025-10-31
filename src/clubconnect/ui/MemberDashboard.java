@@ -4,6 +4,7 @@
  */
 package clubconnect.ui;
 
+import clubconnect.dao.AttendanceDAO;
 import clubconnect.dao.ClubDAO;
 import clubconnect.dao.EventDAO;
 import clubconnect.dao.MembershipDAO;
@@ -15,6 +16,9 @@ import clubconnect.models.User;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
+import javax.swing.JComboBox;
+import java.sql.SQLException;
+
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
@@ -32,6 +36,7 @@ public MemberDashboard(User user) {
        loadClubList();
        populateEventTableForMember();
         loadNotifications();
+       populateRSVPStatuses();
 
        
        btnApply.addActionListener(new ActionListener() {
@@ -47,6 +52,7 @@ public MemberDashboard(User user) {
     public MemberDashboard() {
         initComponents();
         loadClubList();
+        
        
     }
     
@@ -69,26 +75,33 @@ public MemberDashboard(User user) {
     clubList.setModel(model); 
 }
     
-  private void populateEventTableForMember() {
-    if (user == null) {
-        return; // safety check
-    }
+private void populateEventTableForMember() {
+    if (user == null) return;
 
-    DefaultTableModel model = (DefaultTableModel) tblEvents.getModel();
-    model.setRowCount(0);
+    DefaultTableModel model = new DefaultTableModel();
+    // Add event_id column first (we can hide it in the JTable)
+    model.setColumnIdentifiers(new Object[]{"Event ID", "Name", "Description", "Date", "Room"});
 
-    // Use the user object you already have
     List<Event> events = EventDAO.getEventsForMember(user.getUserId());
 
     for (Event e : events) {
         model.addRow(new Object[]{
+            e.getEventId(), // store ID here
             e.getName(),
             e.getDescription(),
             e.getEventDate(),
             e.getRoomName()
         });
     }
+
+    tblEvents.setModel(model);
+
+    // Hide the event_id column visually
+    tblEvents.getColumnModel().getColumn(0).setMinWidth(0);
+    tblEvents.getColumnModel().getColumn(0).setMaxWidth(0);
+    tblEvents.getColumnModel().getColumn(0).setWidth(0);
 }
+
 private void loadNotifications() {
     txtAnnouncements.setText(""); 
 
@@ -100,6 +113,12 @@ private void loadNotifications() {
     }
 }
 
+ private void populateRSVPStatuses() {
+        cmbRSVPStatuses.addItem("Yes");
+        cmbRSVPStatuses.addItem("No");
+        cmbRSVPStatuses.addItem("Maybe");
+        cmbRSVPStatuses.addItem("Waitlist");
+    }
 
 
 
@@ -121,9 +140,11 @@ private void loadNotifications() {
         jPanel2 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         tblEvents = new javax.swing.JTable();
-        jButton3 = new javax.swing.JButton();
+        btnSubmitRSVP = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
+        cmbRSVPStatuses = new javax.swing.JComboBox<>();
+        btnCheckin = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         txtAnnouncements = new javax.swing.JTextArea();
@@ -208,22 +229,28 @@ private void loadNotifications() {
         ));
         jScrollPane2.setViewportView(tblEvents);
 
-        jButton3.setText("RSVP");
+        btnSubmitRSVP.setText("Submit RSVP");
+        btnSubmitRSVP.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSubmitRSVPActionPerformed(evt);
+            }
+        });
 
         jButton4.setText("Cancel RSVP");
 
         jLabel2.setText("RSVPed events");
 
+        btnCheckin.setText("Check-in");
+        btnCheckin.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCheckinActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(64, 64, 64)
-                .addComponent(jButton3)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jButton4)
-                .addGap(70, 70, 70))
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
@@ -231,8 +258,17 @@ private void loadNotifications() {
                         .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 424, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGap(195, 195, 195)
-                        .addComponent(jLabel2)))
-                .addContainerGap(35, Short.MAX_VALUE))
+                        .addComponent(jLabel2))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(cmbRSVPStatuses, javax.swing.GroupLayout.PREFERRED_SIZE, 112, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(btnSubmitRSVP)
+                        .addGap(18, 18, 18)
+                        .addComponent(jButton4)
+                        .addGap(18, 18, 18)
+                        .addComponent(btnCheckin)))
+                .addContainerGap(34, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -241,10 +277,13 @@ private void loadNotifications() {
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 264, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 43, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton3)
-                    .addComponent(jButton4)))
+                    .addComponent(cmbRSVPStatuses, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnSubmitRSVP)
+                    .addComponent(jButton4)
+                    .addComponent(btnCheckin))
+                .addContainerGap(29, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("My Events", jPanel2);
@@ -275,7 +314,7 @@ private void loadNotifications() {
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 232, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(79, Short.MAX_VALUE))
+                .addContainerGap(83, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Announcements", jPanel3);
@@ -315,7 +354,7 @@ private void loadNotifications() {
                 .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 144, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(jButton5)
-                .addContainerGap(76, Short.MAX_VALUE))
+                .addContainerGap(80, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Feedback", jPanel4);
@@ -340,7 +379,7 @@ private void loadNotifications() {
             .addGroup(jPanel5Layout.createSequentialGroup()
                 .addGap(25, 25, 25)
                 .addComponent(jLabel5)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 291, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 295, Short.MAX_VALUE)
                 .addComponent(jButton6)
                 .addContainerGap())
         );
@@ -444,6 +483,79 @@ private void loadNotifications() {
 
     }//GEN-LAST:event_btnApplyActionPerformed
 
+    private void btnSubmitRSVPActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSubmitRSVPActionPerformed
+    
+ int selectedRow = tblEvents.getSelectedRow();
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, "Please select an event first.");
+        return;
+    }
+
+   
+    int eventId = (int) tblEvents.getModel().getValueAt(selectedRow, 0);
+    int userId = user.getUserId();
+    String status = cmbRSVPStatuses.getSelectedItem().toString();
+
+    Integer waitlistPosition = null;
+    if (status.equals("Waitlist")) {
+        try {
+            waitlistPosition = EventDAO.getNextWaitlistPosition(eventId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error calculating waitlist position: " + e.getMessage());
+            return;
+        }
+    }
+
+    boolean success = false;
+    try {
+        success = EventDAO.addRSVP(eventId, userId, status, waitlistPosition);
+    } catch (SQLException e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error submitting RSVP: " + e.getMessage());
+        return;
+    }
+
+    if (success) {
+        JOptionPane.showMessageDialog(this, "RSVP submitted successfully!");
+        populateEventTableForMember(); // refresh table
+    } else {
+        JOptionPane.showMessageDialog(this, "Failed to submit RSVP. You may have already RSVPed.");
+    }
+    }//GEN-LAST:event_btnSubmitRSVPActionPerformed
+
+    private void btnCheckinActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCheckinActionPerformed
+ int selectedRow = tblEvents.getSelectedRow();
+if (selectedRow == -1) {
+    JOptionPane.showMessageDialog(this, "Please select an event first.");
+    return;
+}
+
+int eventId = (int) tblEvents.getModel().getValueAt(selectedRow, 0); 
+int userId = user.getUserId();
+
+// Ask for confirmation
+int confirm = JOptionPane.showConfirmDialog(
+        this, 
+        "Are you sure you want to check in for this event?", 
+        "Confirm Check-In", 
+        JOptionPane.YES_NO_OPTION
+);
+
+if (confirm == JOptionPane.YES_OPTION) {
+    boolean success = AttendanceDAO.markAttendance(eventId, userId, true);
+    if (success) {
+        JOptionPane.showMessageDialog(this, "Checked in successfully!");
+        // refreshAttendanceTable(eventId); // optional: update table to show new status
+    } else {
+        JOptionPane.showMessageDialog(this, "Failed to check in.");
+    }
+} else {
+    // User clicked NO, do nothing
+}
+
+    }//GEN-LAST:event_btnCheckinActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -481,9 +593,11 @@ private void loadNotifications() {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnApply;
+    private javax.swing.JButton btnCheckin;
+    private javax.swing.JButton btnSubmitRSVP;
     private javax.swing.JTable clubList;
+    private javax.swing.JComboBox<String> cmbRSVPStatuses;
     private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
     private javax.swing.JButton jButton6;

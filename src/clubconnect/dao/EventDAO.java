@@ -120,4 +120,52 @@ public class EventDAO {
 
         return events;
     }
+    
+  // EventDAO.java
+
+// Add RSVP
+public static boolean addRSVP(int eventId, int userId, String status, Integer waitlistPosition) throws SQLException {
+    String sql = "INSERT INTO event_rsvps (event_id, user_id, rsvp_status, waitlist_position) VALUES (?, ?, ?, ?)";
+    try (Connection conn = DBManager.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setInt(1, eventId);
+        ps.setInt(2, userId);
+        ps.setString(3, status);
+
+        if (waitlistPosition != null) {
+            ps.setInt(4, waitlistPosition);
+        } else {
+            ps.setNull(4, java.sql.Types.INTEGER);
+        }
+
+        return ps.executeUpdate() > 0;
+    }
+}
+
+// Calculate next waitlist position
+public static int getNextWaitlistPosition(int eventId) throws SQLException {
+    String sql = "SELECT r.capacity, " +
+                 "       (SELECT COUNT(*) FROM event_rsvps er WHERE er.event_id = ? AND er.rsvp_status = 'Yes') AS confirmed_count " +
+                 "FROM events e " +
+                 "JOIN rooms r ON e.room_id = r.room_id " +
+                 "WHERE e.event_id = ?";
+    
+    try (Connection conn = DBManager.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setInt(1, eventId);
+        ps.setInt(2, eventId);
+
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            int capacity = rs.getInt("capacity");
+            int confirmedCount = rs.getInt("confirmed_count");
+            return confirmedCount >= capacity ? confirmedCount - capacity + 1 : 1;
+        }
+    }
+    return 1;
+}
+
+
 }

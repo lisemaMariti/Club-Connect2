@@ -4,6 +4,7 @@
  */
 package clubconnect.ui;
 
+import clubconnect.dao.AttendanceDAO;
 import clubconnect.models.User;
 import clubconnect.models.Club;
 import clubconnect.dao.ClubDAO;
@@ -11,6 +12,7 @@ import clubconnect.dao.EventDAO;
 import clubconnect.dao.MembershipDAO;
 import clubconnect.dao.NotificationDAO;
 import clubconnect.dao.RoomDAO;
+import clubconnect.models.Attendance;
 import clubconnect.models.Event;
 import clubconnect.models.Membership;
 import clubconnect.models.Notification;
@@ -56,14 +58,23 @@ private void populateEventTable() {
 
     List<Event> events = EventDAO.getEventsByClubId(clubId);
 
+    // Include the hidden ID as the first column
     for (Event e : events) {
-        model.addRow(new Object[]{      
-            e.getName(),           
-            e.getDescription(),   
-            e.getEventDate(),      
-            e.getRoomName()        
+        model.addRow(new Object[]{
+            e.getEventId(),  // hidden ID
+            e.getName(),
+            e.getDescription(),
+            e.getEventDate(),
+            e.getRoomName()
         });
     }
+
+    tblEvents.setModel(model);
+
+    // Hide the ID column so user doesn't see it
+    tblEvents.getColumnModel().getColumn(0).setMinWidth(0);
+    tblEvents.getColumnModel().getColumn(0).setMaxWidth(0);
+    tblEvents.getColumnModel().getColumn(0).setWidth(0);
 }
 
 
@@ -148,6 +159,28 @@ private void populateEventTable() {
 
     tblMembers.setModel(model);
 }
+private void populateAttendanceTable(int eventId) {
+    DefaultTableModel model = new DefaultTableModel();
+    model.setColumnIdentifiers(new Object[] {"User ID", "Name", "Status", "Check-in Time"});
+    
+    List<Attendance> attendanceList = AttendanceDAO.getAttendanceForEvent(eventId);
+    for (Attendance a : attendanceList) {
+        model.addRow(new Object[]{
+            a.getUserId(),      
+            a.getUserName(),
+            a.getStatus(),
+            a.getCheckInTime()
+        });
+    }
+
+    tblEvents.setModel(model);
+
+    // Hide User ID column visually
+    tblEvents.getColumnModel().getColumn(0).setMinWidth(0);
+    tblEvents.getColumnModel().getColumn(0).setMaxWidth(0);
+    tblEvents.getColumnModel().getColumn(0).setWidth(0);
+}
+
 
 
     // Default constructor (keep for design view)
@@ -332,6 +365,11 @@ private void populateEventTable() {
         jLabel5.setText("EventDate");
 
         btnMarkAttendance.setText("Attendance");
+        btnMarkAttendance.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnMarkAttendanceActionPerformed(evt);
+            }
+        });
 
         comboRoom.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Select event room" }));
         comboRoom.addActionListener(new java.awt.event.ActionListener() {
@@ -349,9 +387,8 @@ private void populateEventTable() {
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(btnCreateEvent, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addComponent(txtName, javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(txtDescription, javax.swing.GroupLayout.DEFAULT_SIZE, 121, Short.MAX_VALUE))
+                    .addComponent(txtName)
+                    .addComponent(txtDescription, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addGap(30, 30, 30)
                         .addComponent(jLabel4))
@@ -368,12 +405,11 @@ private void populateEventTable() {
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addGap(65, 65, 65)
-                        .addComponent(btnMarkAttendance, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 320, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap())))
+                        .addComponent(btnMarkAttendance, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGap(18, 18, 18)
+                        .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 320, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(57, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -393,11 +429,9 @@ private void populateEventTable() {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(dateChooserEventDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(comboRoom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                        .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(23, 23, 23)))
+                        .addComponent(comboRoom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnCreateEvent)
                     .addComponent(btnMarkAttendance))
@@ -729,6 +763,29 @@ if (selected != null && !selected.startsWith("0 -")) { // skip placeholder
         JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Exception", JOptionPane.ERROR_MESSAGE);
     }
     }//GEN-LAST:event_btnSendNotificationActionPerformed
+
+    private void btnMarkAttendanceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMarkAttendanceActionPerformed
+       try {
+        int selectedRow = tblEvents.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select an event first.");
+            return;
+        }
+
+        // Convert to int safely
+        int eventId = Integer.parseInt(tblEvents.getModel().getValueAt(selectedRow, 0).toString());
+
+        // Populate attendance table for selected event
+        populateAttendanceTable(eventId);
+
+    } catch (NumberFormatException e) {
+        JOptionPane.showMessageDialog(this, "Invalid event ID.");
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+    }
+
+    }//GEN-LAST:event_btnMarkAttendanceActionPerformed
 
     /**
      * @param args the command line arguments

@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS attendance (
     attendance_id INT AUTO_INCREMENT PRIMARY KEY,
     event_id INT NOT NULL,
     user_id INT NOT NULL,
+	check_in_time DATETIME DEFAULT NULL,
     status ENUM('Present','Absent') DEFAULT 'Absent',
     FOREIGN KEY (event_id) REFERENCES events(event_id),
     FOREIGN KEY (user_id) REFERENCES users(user_id)
@@ -92,3 +93,20 @@ CREATE TABLE IF NOT EXISTS notifications (
     FOREIGN KEY (user_id) REFERENCES users(user_id),
     FOREIGN KEY (club_id) REFERENCES clubs(club_id)
 );
+CREATE TABLE IF NOT EXISTS event_rsvps (
+    rsvp_id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT NOT NULL,
+    user_id INT NOT NULL,
+    rsvp_status ENUM('Yes','No','Maybe','Waitlist') DEFAULT 'No',
+    waitlist_position INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (event_id) REFERENCES events(event_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    UNIQUE(event_id, user_id)
+);
+CREATE TABLE IF NOT EXISTS event_waitlist_notifications (
+    notification_id INT AUTO_INCREMENT PRIMARY KEY,
+    rsvp_id INT NOT NULL,
+    notified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (rsvp_id) REFERENCES event_rsvps(rsvp_id)
+	);
