@@ -8,7 +8,9 @@ import clubconnect.db.DBManager;
 import clubconnect.models.Membership;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MembershipDAO {
 
@@ -104,6 +106,24 @@ public static List<Membership> getPendingMembershipsByLeader(int leaderId) {
 
     return list;
 }
+public static List<Map<String, Object>> getAttendanceSummary() {
+    List<Map<String, Object>> list = new ArrayList<>();
+    try (Connection conn = DBManager.getConnection();
+         Statement stmt = conn.createStatement();
+         ResultSet rs = stmt.executeQuery("SELECT club_id, COUNT(member_id) AS total_members FROM memberships GROUP BY club_id")) {
+
+        while (rs.next()) {
+            Map<String, Object> row = new HashMap<>();
+            row.put("club_id", rs.getInt("club_id"));
+            row.put("total_members", rs.getInt("total_members"));
+            list.add(row);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return list;
+}
+
 
 
 

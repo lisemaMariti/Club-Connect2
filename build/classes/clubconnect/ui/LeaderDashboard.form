@@ -251,7 +251,7 @@
                               <Component id="jScrollPane3" min="-2" pref="320" max="-2" attributes="0"/>
                           </Group>
                       </Group>
-                      <EmptySpace pref="57" max="32767" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -455,6 +455,9 @@
               <Properties>
                 <Property name="text" type="java.lang.String" value="Request budget"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnRequestBudgetActionPerformed"/>
+              </Events>
             </Component>
           </SubComponents>
         </Container>

@@ -145,6 +145,33 @@ public static int getClubIdByLeader(int leaderId) {
     return 0; 
 }
 
+public static Club getClubById(int clubId) {
+        String sql = "SELECT * FROM clubs WHERE club_id = ?";
+
+        try (Connection conn = DBManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, clubId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    // Using the parameterized constructor
+                    return new Club(
+                        rs.getInt("club_id"),
+                        rs.getString("name"),
+                        rs.getString("description"),
+                        rs.getString("status"),
+                        rs.getInt("leader_id")
+                    );
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Error fetching club by ID: " + e.getMessage());
+        }
+
+        return null; // Return null if no club found or on error
+    }
 
 }
 

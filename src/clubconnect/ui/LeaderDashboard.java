@@ -5,6 +5,8 @@
 package clubconnect.ui;
 
 import clubconnect.dao.AttendanceDAO;
+
+import clubconnect.dao.BudgetDAO;
 import clubconnect.models.User;
 import clubconnect.models.Club;
 import clubconnect.dao.ClubDAO;
@@ -13,6 +15,7 @@ import clubconnect.dao.MembershipDAO;
 import clubconnect.dao.NotificationDAO;
 import clubconnect.dao.RoomDAO;
 import clubconnect.models.Attendance;
+import clubconnect.models.BudgetRequest;
 import clubconnect.models.Event;
 import clubconnect.models.Membership;
 import clubconnect.models.Notification;
@@ -22,6 +25,28 @@ import java.awt.event.ActionListener;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+
+import clubconnect.models.Room;
+
+import clubconnect.models.Room;
+
+import clubconnect.models.Room;
+
+import javax.swing.table.DefaultTableModel;
+
+import javax.swing.table.DefaultTableModel;
+
+import java.util.List;
+
+import java.util.List;
+
+import javax.swing.table.DefaultTableModel;
+
+import javax.swing.JOptionPane;
+
+import clubconnect.models.Club;
+
+import clubconnect.models.Club;
 
 public class LeaderDashboard extends javax.swing.JFrame {
      private int clubId;
@@ -76,6 +101,32 @@ private void populateEventTable() {
     tblEvents.getColumnModel().getColumn(0).setMaxWidth(0);
     tblEvents.getColumnModel().getColumn(0).setWidth(0);
 }
+// -----------------------------
+// Load Budget Requests for this Leader
+// -----------------------------
+private void loadBudgetRequests() {
+    DefaultTableModel model = new DefaultTableModel(
+        new Object[]{"ID", "Amount", "Status", "Purpose"}, 0
+    );
+
+    // Get all requests from DAO
+    List<BudgetRequest> requests = BudgetDAO.getAllBudgetRequests();
+
+    for (BudgetRequest br : requests) {
+        Club club = ClubDAO.getClubByLeaderId(user.getUserId());
+        if (club != null && br.getEventId() == 0 && club.getClubId() == br.getClubId()) {
+            model.addRow(new Object[]{
+                br.getBudgetId(),
+                "R " + String.format("%.2f", br.getAmount()),
+                br.getStatus(),
+                br.getPurpose()
+            });
+        }
+    }
+
+    tblBudgetRequests.setModel(model);
+}
+
 
 
     // ✅ Constructor used when a leader logs in
@@ -89,6 +140,7 @@ private void populateEventTable() {
         loadPendingMemberships();
         populateComboBox();
         populateEventTable();
+        loadBudgetRequests();
         
         btnApproveMember.addActionListener(new ActionListener() {
     @Override
@@ -454,6 +506,11 @@ private void populateAttendanceTable(int eventId) {
         jScrollPane2.setViewportView(tblBudgetRequests);
 
         btnRequestBudget.setText("Request budget");
+        btnRequestBudget.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnRequestBudgetActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
@@ -764,6 +821,7 @@ if (selected != null && !selected.startsWith("0 -")) { // skip placeholder
     }
     }//GEN-LAST:event_btnSendNotificationActionPerformed
 
+
     private void btnMarkAttendanceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMarkAttendanceActionPerformed
        try {
         int selectedRow = tblEvents.getSelectedRow();
@@ -786,6 +844,43 @@ if (selected != null && !selected.startsWith("0 -")) { // skip placeholder
     }
 
     }//GEN-LAST:event_btnMarkAttendanceActionPerformed
+
+    private void btnRequestBudgetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRequestBudgetActionPerformed
+        String description = JOptionPane.showInputDialog(this, "Enter budget description:");
+if (description == null || description.trim().isEmpty()) return;
+
+String amountStr = JOptionPane.showInputDialog(this, "Enter requested amount:");
+if (amountStr == null || amountStr.trim().isEmpty()) return;
+
+try {
+    double amount = Double.parseDouble(amountStr);
+    Club club = ClubDAO.getClubByLeaderId(user.getUserId());
+
+    if (club == null) {
+        JOptionPane.showMessageDialog(this, "No club found for your account.");
+        return;
+    }
+
+    // Create new budget request linked to the leader's club
+    BudgetRequest budgetRequest = new BudgetRequest(
+        club.getClubId(),
+        0, // no event linked
+        amount,
+        description
+    );
+
+    if (BudgetDAO.submitBudgetRequest(budgetRequest)) {
+        JOptionPane.showMessageDialog(this, "Budget request submitted for approval.");
+    } else {
+        JOptionPane.showMessageDialog(this, "Error submitting budget request.");
+    }
+
+} catch (NumberFormatException e) {
+    JOptionPane.showMessageDialog(this, "Invalid amount entered. Please enter a valid number.");
+}
+
+    }//GEN-LAST:event_btnRequestBudgetActionPerformed
+
 
     /**
      * @param args the command line arguments

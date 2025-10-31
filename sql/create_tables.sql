@@ -74,15 +74,36 @@ CREATE TABLE IF NOT EXISTS attendance (
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
--- Budget Requests Table
-CREATE TABLE IF NOT EXISTS budget_requests (
-    budget_id INT AUTO_INCREMENT PRIMARY KEY,
-    event_id INT NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
-    status ENUM('Pending','Approved','Rejected') DEFAULT 'Pending',
-    purpose VARCHAR(255),
-    FOREIGN KEY (event_id) REFERENCES events(event_id)
+CREATE TABLE IF NOT EXISTS budgets (
+  budget_id INT AUTO_INCREMENT PRIMARY KEY,
+  club_id INT NOT NULL,
+  event_id INT DEFAULT NULL,
+  description VARCHAR(255),
+  amount DECIMAL(10,2),
+  status ENUM('Pending', 'Approved', 'Rejected') DEFAULT 'Pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (club_id) REFERENCES clubs(club_id),
+  FOREIGN KEY (event_id) REFERENCES events(event_id)
 );
+
+CREATE TABLE IF NOT EXISTS resources (
+  resource_id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100),
+  type VARCHAR(100),
+  is_available BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE IF NOT EXISTS bookings (
+  booking_id INT AUTO_INCREMENT PRIMARY KEY,
+  resource_id INT,
+  event_id INT,
+  booked_by INT,
+  start_time DATETIME,
+  end_time DATETIME,
+  FOREIGN KEY (resource_id) REFERENCES resources(resource_id),
+  FOREIGN KEY (event_id) REFERENCES events(event_id)
+);
+
 
 CREATE TABLE IF NOT EXISTS notifications (
     notification_id INT AUTO_INCREMENT PRIMARY KEY,
