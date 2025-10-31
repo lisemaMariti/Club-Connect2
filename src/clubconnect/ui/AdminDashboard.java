@@ -4,15 +4,24 @@
  */
 package clubconnect.ui;
 
+import clubconnect.dao.BudgetDAO;
 import clubconnect.dao.ClubDAO;
+import clubconnect.dao.MembershipDAO;
+import clubconnect.dao.NotificationDAO;
 import clubconnect.dao.UserDAO;
+import clubconnect.models.BudgetRequest;
 import clubconnect.models.Club;
+import clubconnect.models.Notification;
 import clubconnect.models.User;
+import clubconnect.utils.PDFExporter;
+import java.io.File;
 import java.util.List;
+import java.util.Map;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+
 
 
 /**
@@ -29,6 +38,7 @@ public class AdminDashboard extends javax.swing.JFrame {
         setLocationRelativeTo(null);
         loadClubs();
         loadUsers();
+        loadBudgetRequests();
         
          txtSearch.getDocument().addDocumentListener(new DocumentListener() {
         @Override
@@ -111,6 +121,50 @@ private void loadSearchedUsers(String keyword) {
 
     UsersList.setModel(model);
 }
+// ----------------------
+// Load all budget requests
+// ----------------------
+private void loadBudgetRequests() {
+    DefaultTableModel model = new DefaultTableModel(
+        new Object[]{"Budget ID", "Club ID", "Amount", "Status", "Purpose"}, 0
+    );
+
+    List<BudgetRequest> list = BudgetDAO.getAllBudgetRequests();
+    for (BudgetRequest b : list) {
+        model.addRow(new Object[]{
+            b.getBudgetId(),
+            b.getClubId(),
+            "R " + String.format("%.2f", b.getAmount()),
+            b.getStatus(),
+            b.getPurpose()
+        });
+    }
+
+    jTable2.setModel(model);
+}
+private void sendBudgetNotification(int budgetId, String status) {
+    try {
+        // Get club info for this budget
+        BudgetRequest request = BudgetDAO.getBudgetById(budgetId);
+        if (request == null) return;
+
+        Club club = ClubDAO.getClubById(request.getClubId());
+        if (club == null) return;
+
+        String message = String.format(
+            "Your budget request for '%s' has been %s by the Admin.",
+            request.getPurpose(),
+            status.toLowerCase()
+        );
+
+        Notification notification = new Notification(club.getLeaderId(), message, club.getClubId());
+        NotificationDAO.createNotification(notification);
+
+    } catch (Exception e) {
+        System.err.println("Failed to send budget notification: " + e.getMessage());
+    }
+}
+
 
 
  /**
@@ -237,6 +291,11 @@ private void loadSearchedUsers(String keyword) {
         });
 
         jButton5.setText("Reject");
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -368,8 +427,18 @@ private void loadSearchedUsers(String keyword) {
         jTabbedPane1.addTab("Users", jPanel3);
 
         jButton8.setText("Generate Attendance PDF");
+        jButton8.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton8ActionPerformed(evt);
+            }
+        });
 
         jButton9.setText("Generate Financial PDF");
+        jButton9.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton9ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
@@ -434,7 +503,33 @@ private void loadSearchedUsers(String keyword) {
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-        // TODO add your handling code here:
+       int selectedRow = jTable2.getSelectedRow();
+
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, "Please select a budget request to approve.");
+        return;
+    }
+
+    int budgetId = (int) jTable2.getValueAt(selectedRow, 0);
+
+    int confirm = JOptionPane.showConfirmDialog(
+        this,
+        "Approve this budget request?",
+        "Confirm Approval",
+        JOptionPane.YES_NO_OPTION
+    );
+
+    if (confirm == JOptionPane.YES_OPTION) {
+        boolean updated = BudgetDAO.updateBudgetStatus(budgetId, "Approved");
+
+        if (updated) {
+            sendBudgetNotification(budgetId, "Approved");
+            JOptionPane.showMessageDialog(this, "Budget request approved successfully!");
+            loadBudgetRequests();
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to update status.");
+        }
+    }
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void btnRemoveUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveUserActionPerformed
@@ -550,6 +645,74 @@ private void loadSearchedUsers(String keyword) {
         new clubconnect.ui.LoginForm().setVisible(true); // open login screen
     }
     }//GEN-LAST:event_jButton10ActionPerformed
+
+    private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
+         try {
+            List<Map<String, Object>> attendanceData = MembershipDAO.getAttendanceSummary();
+            if (attendanceData.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No attendance records found.");
+                return;
+            }
+
+            File outFile = new File("attendance_report.pdf");
+            PDFExporter.exportAttendanceReport(outFile, attendanceData);
+
+            JOptionPane.showMessageDialog(this,
+                    "Attendance report generated successfully!\n" + outFile.getAbsolutePath());
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error generating report: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }//GEN-LAST:event_jButton8ActionPerformed
+
+    private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
+                try {
+            List<Map<String, Object>> financialData = BudgetDAO.getFinancialSummary();
+            if (financialData.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No financial data found.");
+                return;
+            }
+
+            File outFile = new File("financial_report.pdf");
+            PDFExporter.exportFinancialReport(outFile, financialData);
+
+            JOptionPane.showMessageDialog(this,
+                    "Financial report generated successfully!\n" + outFile.getAbsolutePath());
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error generating report: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }//GEN-LAST:event_jButton9ActionPerformed
+
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+          int selectedRow = jTable2.getSelectedRow();
+
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, "Please select a budget request to reject.");
+        return;
+    }
+
+    int budgetId = (int) jTable2.getValueAt(selectedRow, 0);
+
+    int confirm = JOptionPane.showConfirmDialog(
+        this,
+        "Reject this budget request?",
+        "Confirm Rejection",
+        JOptionPane.YES_NO_OPTION
+    );
+
+    if (confirm == JOptionPane.YES_OPTION) {
+        boolean updated = BudgetDAO.updateBudgetStatus(budgetId, "Rejected");
+
+        if (updated) {
+            sendBudgetNotification(budgetId, "Rejected");
+            JOptionPane.showMessageDialog(this, "Budget request rejected successfully!");
+            loadBudgetRequests();
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to update status.");
+        }
+    }
+    }//GEN-LAST:event_jButton5ActionPerformed
 
     /**
      * @param args the command line arguments
