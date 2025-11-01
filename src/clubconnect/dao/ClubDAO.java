@@ -202,6 +202,100 @@ public static Club getClubByEventId(int eventId) {
     return null; // no club found
 }
 
+public static boolean updateClubStatus(int clubId, String status) {
+    String sql = "UPDATE clubs SET status = ? WHERE club_id = ?";
+    
+    try (Connection conn = DBManager.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+        
+        stmt.setString(1, status);
+        stmt.setInt(2, clubId);
+        
+        int rows = stmt.executeUpdate();
+        return rows > 0;
+    } catch (Exception e) {
+        e.printStackTrace();
+        return false;
+    }
+}
+
+/*public static Club getClubById(int clubId) {
+    String sql = "SELECT * FROM clubs WHERE club_id = ?";
+    
+    try (Connection conn = DBManager.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setInt(1, clubId);
+
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return new Club(
+                    rs.getInt("club_id"),
+                    rs.getString("name"),
+                    rs.getString("description"),
+                    rs.getString("status"),
+                    rs.getInt("leader_id")
+                );
+            }
+        }
+
+    } catch (SQLException e) {
+        System.err.println("Error fetching club by ID: " + e.getMessage());
+    }
+
+    return null; // club not found
+}
+*/
+public static boolean updateClub(Club club) {
+    // Fetch current club data first
+    Club current = getClubById(club.getClubId());
+    if (current == null) {
+        System.out.println("Club not found!");
+        return false;
+    }
+
+    // Use new values if provided, otherwise keep old values
+    String nameToUpdate = (club.getName() != null && !club.getName().isEmpty()) ? club.getName() : current.getName();
+    String descriptionToUpdate = (club.getDescription() != null && !club.getDescription().isEmpty()) ? club.getDescription() : current.getDescription();
+    String statusToUpdate = (club.getStatus() != null) ? club.getStatus() : current.getStatus();
+    int leaderIdToUpdate = (club.getLeaderId() != 0) ? club.getLeaderId() : current.getLeaderId();
+
+    String sql = "UPDATE clubs SET name = ?, description = ?, status = ?, leader_id = ? WHERE club_id = ?";
+
+    try (Connection conn = DBManager.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setString(1, nameToUpdate);
+        ps.setString(2, descriptionToUpdate);
+        ps.setString(3, statusToUpdate);
+        ps.setInt(4, leaderIdToUpdate);
+        ps.setInt(5, club.getClubId());
+
+        int rows = ps.executeUpdate();
+        System.out.println("Rows updated: " + rows); // Debug info
+        return rows > 0;
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+        return false;
+    }
+}
+
+
+
+
+public static boolean deactivateClub(int clubId) {
+    String sql = "UPDATE clubs SET status = 'Inactive' WHERE club_id = ?";
+    try (Connection conn = DBManager.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, clubId);
+        return ps.executeUpdate() > 0;
+    } catch (SQLException e) {
+        e.printStackTrace();
+        return false;
+    }
+}
+
 
 }
 

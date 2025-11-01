@@ -18,16 +18,14 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 
 
-/**
- *
- * @author User
- */
+
 public class AdminDashboard extends javax.swing.JFrame {
  private User user;
  
@@ -65,25 +63,32 @@ public class AdminDashboard extends javax.swing.JFrame {
         
     }
    
-   private void loadClubs() {
-    List<Club> clubs = ClubDAO.getAllClubs(); // your static method
-    String[] columnNames = {"Club ID", "Name", "Description", "Status", "Leader ID"};
-    DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+   
+private void loadClubs() {
+    List<Club> clubs = ClubDAO.getAllClubs();
+
+    // Custom table model that allows editing only Name (1) and Description (2)
+    DefaultTableModel model = new DefaultTableModel(new Object[]{"Club ID", "Name", "Description", "Status", "Leader ID"}, 0) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            // Only Name (1) and Description (2) are editable
+            return column == 1 || column == 2;
+        }
+    };
 
     for (Club c : clubs) {
-        Object[] row = {
+        model.addRow(new Object[]{
             c.getClubId(),
             c.getName(),
             c.getDescription(),
             c.getStatus(),
             c.getLeaderId()
-        };
-        model.addRow(row);
+        });
     }
 
     clublist.setModel(model);
 }
-   
+
 private void loadUsers() {
     List<User> users = UserDAO.getAllUsers(); 
     String[] columnNames = {"User ID", "Name", "Email", "Role", "Active"};
@@ -227,7 +232,7 @@ private void sendBudgetNotification(int budgetId, String status) {
         ));
         jScrollPane1.setViewportView(clublist);
 
-        jButton1.setText("Add Club");
+        jButton1.setText("Approve Club");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton1ActionPerformed(evt);
@@ -235,8 +240,18 @@ private void sendBudgetNotification(int budgetId, String status) {
         });
 
         jButton2.setText("Edit Club");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
 
         jButton3.setText("Deactivate Club");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -244,16 +259,18 @@ private void sendBudgetNotification(int budgetId, String status) {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 610, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jButton1)
-                .addGap(173, 173, 173)
-                .addComponent(jButton2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jButton3)
-                .addGap(40, 40, 40))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(6, 6, 6)
+                        .addComponent(jButton1)
+                        .addGap(167, 167, 167)
+                        .addComponent(jButton2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton3)
+                        .addGap(40, 40, 40))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 610, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap())))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -499,7 +516,43 @@ private void sendBudgetNotification(int budgetId, String status) {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        // TODO add your handling code here:
+                                         
+    int selectedRow = clublist.getSelectedRow();
+
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, "Please select a club to approve.");
+        return;
+    }
+
+    // Get the Club ID and current status from the selected row
+    int clubId = (int) clublist.getValueAt(selectedRow, 0);
+    String currentStatus = (String) clublist.getValueAt(selectedRow, 3);
+
+    // If already approved, show info
+    if ("Approved".equalsIgnoreCase(currentStatus)) {
+        JOptionPane.showMessageDialog(this, "This club is already approved.");
+        return;
+    }
+
+    int confirm = JOptionPane.showConfirmDialog(
+        this,
+        "Approve this club?",
+        "Confirm Approval",
+        JOptionPane.YES_NO_OPTION
+    );
+
+    if (confirm == JOptionPane.YES_OPTION) {
+        boolean updated = ClubDAO.updateClubStatus(clubId, "Approved");
+
+        if (updated) {
+            JOptionPane.showMessageDialog(this, "Club approved successfully!");
+            loadClubs(); // Refresh table to show new status
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to update club status.");
+        }
+    }
+
+
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
@@ -713,6 +766,103 @@ private void sendBudgetNotification(int budgetId, String status) {
         }
     }
     }//GEN-LAST:event_jButton5ActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+     int selectedRow = clublist.getSelectedRow();
+
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, "Please select a club to save edits.", "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    int clubId = (int) clublist.getValueAt(selectedRow, 0);
+    String newName = ((String) clublist.getValueAt(selectedRow, 1)).trim();
+    String newDescription = ((String) clublist.getValueAt(selectedRow, 2)).trim();
+
+    // Ensure at least one field has a value
+    if (newName.isEmpty() && newDescription.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Nothing to update.", "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    // Confirm save
+    int confirm = JOptionPane.showConfirmDialog(this, "Save changes to this club?", "Confirm Edit", JOptionPane.YES_NO_OPTION);
+    if (confirm != JOptionPane.YES_OPTION) return;
+
+    // Fetch current club data to prevent overwriting unchanged fields
+    Club currentClub = ClubDAO.getClubById(clubId);
+    if (currentClub == null) {
+        JOptionPane.showMessageDialog(this, "Club not found in database.", "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    // Use new values if provided, otherwise keep old values
+    String nameToUpdate = newName.isEmpty() ? currentClub.getName() : newName;
+    String descriptionToUpdate = newDescription.isEmpty() ? currentClub.getDescription() : newDescription;
+
+    // Create club object with updated data
+    Club club = new Club(clubId, nameToUpdate, descriptionToUpdate, currentClub.getStatus(), currentClub.getLeaderId());
+
+    // Update in DB
+    boolean success = ClubDAO.updateClub(club);
+
+    if (success) {
+        JOptionPane.showMessageDialog(this, "Club updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+        loadClubs(); // refresh table
+    } else {
+        JOptionPane.showMessageDialog(this, "Failed to update club.", "Error", JOptionPane.ERROR_MESSAGE);
+    }
+    }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+                                              
+    int selectedRow = clublist.getSelectedRow();
+
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, "Please select a club to deactivate.", "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    int clubId = (int) clublist.getValueAt(selectedRow, 0);
+    String currentStatus = (String) clublist.getValueAt(selectedRow, 3);
+
+    if ("Rejected".equalsIgnoreCase(currentStatus)) {
+        JOptionPane.showMessageDialog(this, "This club is already deactivated.", "Info", JOptionPane.INFORMATION_MESSAGE);
+        return;
+    }
+
+    int confirm = JOptionPane.showConfirmDialog(this,
+            "Are you sure you want to deactivate this club?",
+            "Confirm Deactivation",
+            JOptionPane.YES_NO_OPTION);
+
+    if (confirm != JOptionPane.YES_OPTION) return;
+
+    boolean success = ClubDAO.updateClubStatus(clubId, "Rejected");
+
+    if (success) {
+        JOptionPane.showMessageDialog(this, "Club deactivated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+        loadClubs(); // Refresh the table to show the new status
+    } else {
+        JOptionPane.showMessageDialog(this, "Failed to deactivate club.", "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    }//GEN-LAST:event_jButton3ActionPerformed
+private void refreshClubTable() {
+    List<Club> clubs = ClubDAO.getAllClubs();
+    DefaultTableModel model = (DefaultTableModel) clublist.getModel();
+    model.setRowCount(0); // clear table
+
+    for (Club c : clubs) {
+        model.addRow(new Object[]{
+            c.getClubId(),
+            c.getName(),
+            c.getDescription(),
+            c.getStatus(),
+            c.getLeaderId()
+        });
+    }
+}
 
     /**
      * @param args the command line arguments
