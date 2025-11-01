@@ -121,13 +121,56 @@ public class EventDAO {
         return events;
     }
     
-  // EventDAO.java
-
-// Add RSVP
-public static boolean addRSVP(int eventId, int userId, String status, Integer waitlistPosition) throws SQLException {
-    String sql = "INSERT INTO event_rsvps (event_id, user_id, rsvp_status, waitlist_position) VALUES (?, ?, ?, ?)";
+  public static boolean addRSVP(int eventId, int userId, String status, Integer waitlistPosition) {
+    String sql = "INSERT INTO event_rsvps (event_id, user_id, rsvp_status, waitlist_position) " +
+                 "VALUES (?, ?, ?, ?)";
     try (Connection conn = DBManager.getConnection();
          PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setInt(1, eventId);
+        ps.setInt(2, userId);
+        ps.setString(3, status); 
+        if (waitlistPosition != null) {
+            ps.setInt(4, waitlistPosition);
+        } else {
+            ps.setNull(4, java.sql.Types.INTEGER);
+        }
+
+        return ps.executeUpdate() > 0;
+    } catch (SQLException e) {
+        e.printStackTrace();
+        return false;
+    }
+}
+  
+  public static int getNextWaitlistPosition(int eventId) throws SQLException {
+    String sql = "SELECT COUNT(*) AS cnt FROM event_rsvps WHERE event_id = ? AND rsvp_status = 'Waitlist'";
+    try (Connection conn = DBManager.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, eventId);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            return rs.getInt("cnt") + 1; // next available position
+        }
+    }
+    return 1; // first
+}
+  
+  public static int getClubIdByEvent(int eventId) throws SQLException {
+    String sql = "SELECT club_id FROM events WHERE event_id = ?";
+    try (Connection conn = DBManager.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, eventId);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) return rs.getInt("club_id");
+    }
+    return -1;
+}
+public static int addRSVPAndGetId(int eventId, int userId, String status, Integer waitlistPosition) throws SQLException {
+    String sql = "INSERT INTO event_rsvps (event_id, user_id, rsvp_status, waitlist_position) VALUES (?, ?, ?, ?)";
+    
+    try (Connection conn = DBManager.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
         ps.setInt(1, eventId);
         ps.setInt(2, userId);
@@ -139,33 +182,53 @@ public static boolean addRSVP(int eventId, int userId, String status, Integer wa
             ps.setNull(4, java.sql.Types.INTEGER);
         }
 
-        return ps.executeUpdate() > 0;
+        int affectedRows = ps.executeUpdate();
+
+        if (affectedRows == 0) {
+            throw new SQLException("Creating RSVP failed, no rows affected.");
+        }
+
+        try (ResultSet rs = ps.getGeneratedKeys()) {
+            if (rs.next()) {
+                return rs.getInt(1); // return generated RSVP ID
+            } else {
+                throw new SQLException("Creating RSVP failed, no ID obtained.");
+            }
+        }
     }
 }
-
-// Calculate next waitlist position
-public static int getNextWaitlistPosition(int eventId) throws SQLException {
-    String sql = "SELECT r.capacity, " +
-                 "       (SELECT COUNT(*) FROM event_rsvps er WHERE er.event_id = ? AND er.rsvp_status = 'Yes') AS confirmed_count " +
+public static int getEventCapacity(int eventId) throws SQLException {
+    String sql = "SELECT r.capacity " +
                  "FROM events e " +
                  "JOIN rooms r ON e.room_id = r.room_id " +
                  "WHERE e.event_id = ?";
-    
     try (Connection conn = DBManager.getConnection();
          PreparedStatement ps = conn.prepareStatement(sql)) {
-
         ps.setInt(1, eventId);
-        ps.setInt(2, eventId);
-
         ResultSet rs = ps.executeQuery();
         if (rs.next()) {
-            int capacity = rs.getInt("capacity");
-            int confirmedCount = rs.getInt("confirmed_count");
-            return confirmedCount >= capacity ? confirmedCount - capacity + 1 : 1;
+            return rs.getInt("capacity");
         }
     }
-    return 1;
+    return 0; // default if not found
 }
+
+public static int getConfirmedRSVPCount(int eventId) throws SQLException {
+    String sql = "SELECT COUNT(*) AS count " +
+                 "FROM event_rsvps " +
+                 "WHERE event_id = ? AND rsvp_status = 'Yes'";
+    try (Connection conn = DBManager.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, eventId);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            return rs.getInt("count");
+        }
+    }
+    return 0;
+}
+
+
 
 
 }

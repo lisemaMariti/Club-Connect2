@@ -18,7 +18,6 @@ import java.awt.event.ActionListener;
 import java.util.List;
 import javax.swing.JComboBox;
 import java.sql.SQLException;
-
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
@@ -117,7 +116,7 @@ private void loadNotifications() {
         cmbRSVPStatuses.addItem("Yes");
         cmbRSVPStatuses.addItem("No");
         cmbRSVPStatuses.addItem("Maybe");
-        cmbRSVPStatuses.addItem("Waitlist");
+     
     }
 
 
@@ -484,17 +483,34 @@ private void loadNotifications() {
     }//GEN-LAST:event_btnApplyActionPerformed
 
     private void btnSubmitRSVPActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSubmitRSVPActionPerformed
-    
- int selectedRow = tblEvents.getSelectedRow();
+
+                                             
+
+    int selectedRow = tblEvents.getSelectedRow();
     if (selectedRow == -1) {
         JOptionPane.showMessageDialog(this, "Please select an event first.");
         return;
     }
 
-   
     int eventId = (int) tblEvents.getModel().getValueAt(selectedRow, 0);
     int userId = user.getUserId();
     String status = cmbRSVPStatuses.getSelectedItem().toString();
+
+    // ✅ Automatically handle capacity logic
+    try {
+        int capacity = EventDAO.getEventCapacity(eventId);
+        int confirmedCount = EventDAO.getConfirmedRSVPCount(eventId);
+
+        if (status.equals("Yes") && confirmedCount >= capacity) {
+            status = "Waitlist";
+            JOptionPane.showMessageDialog(this, 
+                "Event is full. You've been placed on the waitlist.");
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error checking event capacity: " + e.getMessage());
+        return;
+    }
 
     Integer waitlistPosition = null;
     if (status.equals("Waitlist")) {
@@ -507,52 +523,71 @@ private void loadNotifications() {
         }
     }
 
-    boolean success = false;
+    int rsvpId = -1;
     try {
-        success = EventDAO.addRSVP(eventId, userId, status, waitlistPosition);
+        rsvpId = EventDAO.addRSVPAndGetId(eventId, userId, status, waitlistPosition);
+        if (rsvpId == -1) {
+            JOptionPane.showMessageDialog(this, "Failed to submit RSVP. You may have already RSVPed.");
+            return;
+        }
     } catch (SQLException e) {
         e.printStackTrace();
         JOptionPane.showMessageDialog(this, "Error submitting RSVP: " + e.getMessage());
         return;
     }
 
-    if (success) {
-        JOptionPane.showMessageDialog(this, "RSVP submitted successfully!");
-        populateEventTableForMember(); // refresh table
-    } else {
-        JOptionPane.showMessageDialog(this, "Failed to submit RSVP. You may have already RSVPed.");
+    Club club = ClubDAO.getClubByEventId(eventId);
+    if (club != null) {
+        String eventName = tblEvents.getModel().getValueAt(selectedRow, 1).toString();
+        String message = status.equals("Waitlist")
+                ? "You are on the waitlist for event: " + eventName
+                : "Your RSVP for event: " + eventName + " is confirmed!";
+        
+        boolean notificationCreated = NotificationDAO.createRSVPNotification(userId, club.getClubId(), rsvpId, message);
+        if (!notificationCreated) {
+            System.err.println("Failed to create RSVP notification");
+        }
+
+        if (status.equals("Waitlist")) {
+            NotificationDAO.createWaitlistNotification(rsvpId);
+        }
     }
+
+    JOptionPane.showMessageDialog(this, "RSVP submitted successfully!");
+    populateEventTableForMember();
+
+
+
+
     }//GEN-LAST:event_btnSubmitRSVPActionPerformed
 
     private void btnCheckinActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCheckinActionPerformed
- int selectedRow = tblEvents.getSelectedRow();
-if (selectedRow == -1) {
-    JOptionPane.showMessageDialog(this, "Please select an event first.");
-    return;
-}
-
-int eventId = (int) tblEvents.getModel().getValueAt(selectedRow, 0); 
-int userId = user.getUserId();
-
-// Ask for confirmation
-int confirm = JOptionPane.showConfirmDialog(
-        this, 
-        "Are you sure you want to check in for this event?", 
-        "Confirm Check-In", 
-        JOptionPane.YES_NO_OPTION
-);
-
-if (confirm == JOptionPane.YES_OPTION) {
-    boolean success = AttendanceDAO.markAttendance(eventId, userId, true);
-    if (success) {
-        JOptionPane.showMessageDialog(this, "Checked in successfully!");
-        // refreshAttendanceTable(eventId); // optional: update table to show new status
-    } else {
-        JOptionPane.showMessageDialog(this, "Failed to check in.");
+    int selectedRow = tblEvents.getSelectedRow();
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, "Please select an event first.");
+        return;
     }
-} else {
-    // User clicked NO, do nothing
-}
+
+    int eventId = (int) tblEvents.getModel().getValueAt(selectedRow, 0); 
+    int userId = user.getUserId();
+
+    // Ask for confirmation
+    int confirm = JOptionPane.showConfirmDialog(
+            this, 
+            "Are you sure you want to check in for this event?", 
+            "Confirm Check-In", 
+            JOptionPane.YES_NO_OPTION
+    );
+
+    if (confirm == JOptionPane.YES_OPTION) {
+        boolean success = AttendanceDAO.markAttendance(eventId, userId, true);
+        if (success) {
+            JOptionPane.showMessageDialog(this, "Checked in successfully!");
+//            refreshAttendanceTable(eventId); // update table to show new status
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to check in. Please try again.");
+        }
+    }
 
     }//GEN-LAST:event_btnCheckinActionPerformed
 

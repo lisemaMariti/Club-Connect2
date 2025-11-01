@@ -9,6 +9,7 @@ import clubconnect.models.Membership;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -108,21 +109,41 @@ public static List<Membership> getPendingMembershipsByLeader(int leaderId) {
 }
 public static List<Map<String, Object>> getAttendanceSummary() {
     List<Map<String, Object>> list = new ArrayList<>();
+    String sql = """
+        SELECT 
+            c.name AS club_name,
+            e.name AS event_name,
+            SUM(CASE WHEN a.status = 'Present' THEN 1 ELSE 0 END) AS present_count,
+            SUM(CASE WHEN a.status = 'Absent' THEN 1 ELSE 0 END) AS absent_count
+        FROM attendance a
+        JOIN events e ON a.event_id = e.event_id
+        JOIN clubs c ON e.club_id = c.club_id
+        GROUP BY c.name, e.name
+        ORDER BY c.name, e.name;
+    """;
+
     try (Connection conn = DBManager.getConnection();
-         Statement stmt = conn.createStatement();
-         ResultSet rs = stmt.executeQuery("SELECT club_id, COUNT(member_id) AS total_members FROM memberships GROUP BY club_id")) {
+         PreparedStatement ps = conn.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
 
         while (rs.next()) {
-            Map<String, Object> row = new HashMap<>();
-            row.put("club_id", rs.getInt("club_id"));
-            row.put("total_members", rs.getInt("total_members"));
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("Club", rs.getString("club_name"));
+            row.put("Event", rs.getString("event_name"));
+            row.put("Present", rs.getInt("present_count"));
+            row.put("Absent", rs.getInt("absent_count"));
             list.add(row);
         }
-    } catch (Exception e) {
+
+    } catch (SQLException e) {
         e.printStackTrace();
     }
+
     return list;
 }
+
+
+
 
 
 

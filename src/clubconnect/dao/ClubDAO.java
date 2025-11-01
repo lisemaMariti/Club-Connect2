@@ -173,5 +173,35 @@ public static Club getClubById(int clubId) {
         return null; // Return null if no club found or on error
     }
 
+public static Club getClubByEventId(int eventId) {
+    String sql = "SELECT c.* FROM clubs c " +
+                 "JOIN events e ON c.club_id = e.club_id " +
+                 "WHERE e.event_id = ?";
+
+    try (Connection conn = DBManager.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setInt(1, eventId);
+
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return new Club(
+                    rs.getInt("club_id"),
+                    rs.getString("name"),
+                    rs.getString("description"),
+                    rs.getString("status"),
+                    rs.getInt("leader_id")
+                );
+            }
+        }
+
+    } catch (SQLException e) {
+        System.err.println("Error fetching club by event ID: " + e.getMessage());
+    }
+
+    return null; // no club found
+}
+
+
 }
 
