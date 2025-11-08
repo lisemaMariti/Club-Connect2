@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package clubconnect.models;
 
 public class BudgetRequest {
@@ -14,7 +10,10 @@ public class BudgetRequest {
     private String clubName;
     private String eventName;
 
-    // --- Full constructor (used for database fetch) ---
+    // --- Default no-arg constructor (needed for dialogs, DAOs, etc.) ---
+    public BudgetRequest() {}
+
+    // --- Full constructor (used when fetching from database) ---
     public BudgetRequest(int budgetId, int clubId, int eventId, double amount, String status, String purpose) {
         this.budgetId = budgetId;
         this.clubId = clubId;
@@ -24,7 +23,7 @@ public class BudgetRequest {
         this.purpose = purpose;
     }
 
-    // --- Simplified constructor for new requests (defaults to Pending) ---
+    // --- Simplified constructor for creating new budget requests ---
     public BudgetRequest(int clubId, int eventId, double amount, String purpose) {
         this(0, clubId, eventId, amount, "Pending", purpose);
     }

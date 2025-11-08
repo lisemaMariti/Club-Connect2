@@ -2,45 +2,46 @@ package clubconnect.dao;
 
 import clubconnect.db.DBManager;
 import clubconnect.models.Attendance;
+import clubconnect.models.User;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AttendanceDAO {
 
-    // Get attendance for a specific event
-    public static List<Attendance> getAttendanceForEvent(int eventId) {
-        List<Attendance> list = new ArrayList<>();
-        String sql = "SELECT a.attendance_id, a.event_id, a.user_id, a.check_in_time, a.status, u.name AS user_name " +
-                     "FROM attendance a " +
-                     "JOIN users u ON a.user_id = u.user_id " +
-                     "WHERE a.event_id = ?";
+// Get RSVPs for a specific event
+public static List<User> getAttendeesForEvent(int eventId) {
+    List<User> list = new ArrayList<>();
+    String sql = "SELECT u.user_id, u.name, u.email, r.rsvp_status " +
+                 "FROM event_rsvps r " +
+                 "JOIN users u ON r.user_id = u.user_id " +
+                 "WHERE r.event_id = ? AND r.rsvp_status IN ('Yes', 'Maybe', 'No')";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+    try (Connection conn = DBManager.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setInt(1, eventId);
-            ResultSet rs = ps.executeQuery();
+        ps.setInt(1, eventId);
+        ResultSet rs = ps.executeQuery();
 
-            while (rs.next()) {
-                Attendance a = new Attendance(
-                        rs.getInt("attendance_id"),
-                        rs.getInt("event_id"),
-                        rs.getInt("user_id"),
-                        rs.getTimestamp("check_in_time"),
-                        rs.getString("status")
-                );
-                a.setUserName(rs.getString("user_name"));
-                list.add(a);
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
+        while (rs.next()) {
+            User user = new User();
+            user.setUserId(rs.getInt("user_id"));
+            user.setName(rs.getString("name"));
+            user.setEmail(rs.getString("email"));
+//            user.setRsvpStatus(rs.getString("rsvp_status"));
+            list.add(user);
         }
 
-        return list;
+    } catch (SQLException e) {
+        e.printStackTrace();
     }
+
+    return list;
+}
+
 
     // Mark attendance
     public static boolean markAttendance(int eventId, int userId, boolean present) {
@@ -81,4 +82,36 @@ public class AttendanceDAO {
             return false;
         }
     }
+  public static Map<String, Integer> getAttendanceCounts() {
+    Map<String, Integer> data = new LinkedHashMap<>();
+    String sql = "SELECT e.name AS event_name, COUNT(a.user_id) AS total_attendees " +
+                 "FROM events e " +
+                 "LEFT JOIN attendance a ON e.event_id = a.event_id AND a.status = 'Present' " +
+                 "GROUP BY e.name " +
+                 "ORDER BY e.event_date";
+
+    try (Connection conn = DBManager.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+
+        if (!rs.isBeforeFirst()) {
+            System.out.println("ResultSet is empty!");
+        }
+
+        while (rs.next()) {
+            String name = rs.getString("event_name");
+            int count = rs.getInt("total_attendees");
+            System.out.println("Event: " + name + ", Count: " + count); // <-- debug print
+            data.put(name, count);
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+
+    return data;
+}
+
+    
+
 }

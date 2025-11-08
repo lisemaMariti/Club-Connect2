@@ -10,10 +10,12 @@ import clubconnect.dao.BudgetDAO;
 import clubconnect.models.User;
 import clubconnect.models.Club;
 import clubconnect.dao.ClubDAO;
+import static clubconnect.dao.ClubDAO.getClubName;
 import clubconnect.dao.EventDAO;
 import clubconnect.dao.MembershipDAO;
 import clubconnect.dao.NotificationDAO;
 import clubconnect.dao.RoomDAO;
+import clubconnect.dao.UserDAO;
 import clubconnect.models.Attendance;
 import clubconnect.models.BudgetRequest;
 import clubconnect.models.Event;
@@ -47,10 +49,20 @@ import javax.swing.JOptionPane;
 import clubconnect.models.Club;
 
 import clubconnect.models.Club;
+import clubconnect.services.NotificationService;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.GridLayout;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.ZoneId;
 
 public class LeaderDashboard extends javax.swing.JFrame {
      private int clubId;
     private User user;
+     private Club currentClub;
+    private LeaderDiscussionPanel leaderDiscussionPanel;
     
   
 
@@ -60,9 +72,74 @@ public class LeaderDashboard extends javax.swing.JFrame {
     
     public LeaderDashboard(int ClubId) {
     this.clubId = ClubId;
+   
     initComponents();   
     setLocationRelativeTo(null);
+   
+    
+    
+    
 
+}
+//     public LeaderDashboard(User user, Club club) {
+//        this.user = user;
+//        this.currentClub = club;  // Directly set the club
+//        initComponents();   
+//        setLocationRelativeTo(null);
+//        setTitle("Leader Dashboard - " + user.getName() + " | " + club.getName());
+//        
+//        setupDiscussionBoard(); 
+//          loadPendingMemberships();
+//    populateComboBox();
+//    populateEventTable();
+//    loadBudgetRequests();
+//    populateEventComboBox();
+//    populateEventTable();
+//    setupDiscussionBoard();
+//        
+//        System.out.println("Leader " + user.getName() + " managing: " + club.getName());
+//        
+//        
+//        
+//    }
+    
+    
+    
+private void setupDiscussionBoard() {
+    System.out.println("=== DEBUG: Setting up discussion board ===");
+    System.out.println("Current Club: " + (currentClub != null ? currentClub.getName() : "NULL"));
+    
+    if (currentClub != null) {
+        try {
+            System.out.println("DEBUG: Creating LeaderDiscussionPanel...");
+            leaderDiscussionPanel = new LeaderDiscussionPanel(currentClub, user);
+            jTabbedPane2.addTab("Discussion Board 🗨️", leaderDiscussionPanel);
+            
+            // Refresh the correct component
+            jTabbedPane2.revalidate();
+            jTabbedPane2.repaint();
+            
+            System.out.println("DEBUG: Leader discussion panel loaded successfully");
+            
+        } catch (Exception e) {
+            System.err.println("DEBUG: Error creating panel: " + e.getMessage());
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading discussion board: " + e.getMessage());
+        }
+    } else {
+        System.out.println("DEBUG: No club - showing placeholder");
+        // Add a more informative placeholder panel
+        JPanel placeholderPanel = new JPanel(new BorderLayout());
+        JLabel message = new JLabel("<html><center><b>No Club Assigned</b><br>Discussion board unavailable<br><br>" +
+                                   "You are not currently assigned as a leader of any club.<br>" +
+                                   "Please contact the administrator.</center></html>", JLabel.CENTER);
+        message.setForeground(Color.RED);
+        placeholderPanel.add(message, BorderLayout.CENTER);
+        jTabbedPane2.addTab("Discussion Board 🗨️", placeholderPanel);
+        
+        jTabbedPane2.revalidate();
+        jTabbedPane2.repaint();
+    }
 }
 
 private void populateComboBox() {
@@ -127,13 +204,41 @@ private void loadBudgetRequests() {
     tblBudgetRequests.setModel(model);
 }
 
+private void populateEventComboBox() {
+    cmbEvents.removeAllItems();
+
+    // ✅ Add a default prompt at the top
+    cmbEvents.addItem("Choose Event");
+
+    int leaderId = user.getUserId(); 
+    List<Event> events = EventDAO.getEventsByLeaderId(leaderId);
+
+    for (Event e : events) {
+        cmbEvents.addItem(e.getEventId() + " - " + e.getName());
+    }
+}
 
 
-    // ✅ Constructor used when a leader logs in
+
+
+
+    //  Constructor used when a leader logs in
     public LeaderDashboard(User user) {
         this.user = user;
         
-        this.clubId = ClubDAO.getClubIdByLeader(user.getUserId());
+   
+    this.clubId = ClubDAO.getClubIdByLeader(user.getUserId());
+    System.out.println("DEBUG: Found club ID: " + this.clubId);
+    
+    
+    if (this.clubId > 0) {
+        this.currentClub = ClubDAO.getClubById(this.clubId);
+        System.out.println("DEBUG: Loaded club: " + (this.currentClub != null ? this.currentClub.getName() : "null"));
+    } else {
+        this.currentClub = null;
+        System.out.println("DEBUG: No club ID found for user");
+     
+    }
         initComponents();
         setTitle("Leader Dashboard - " + user.getName());
         setLocationRelativeTo(null);
@@ -141,6 +246,21 @@ private void loadBudgetRequests() {
         populateComboBox();
         populateEventTable();
         loadBudgetRequests();
+         populateEventComboBox();
+            setupDiscussionBoard(); 
+            
+              if (this.currentClub != null) {
+        this.clubId = currentClub.getClubId();
+    } else {
+        this.clubId = 0;
+        
+        
+    }
+              
+              
+                  if (currentClub != null) {
+        setTitle("Leader Dashboard - " + user.getName() + " | " + currentClub.getName());
+        jLabel2.setText("Club: " + currentClub.getName() + " (" + currentClub.getStatus() + ")");
         
         btnApproveMember.addActionListener(new ActionListener() {
     @Override
@@ -190,6 +310,7 @@ private void loadBudgetRequests() {
             jLabel2.setText("Club: " + club.getName() + " (" + club.getStatus() + ")");
             setVisible(true);
         }
+                  }
     }
     
 
@@ -212,28 +333,49 @@ private void loadBudgetRequests() {
     tblMembers.setModel(model);
 }
 private void populateAttendanceTable(int eventId) {
-    DefaultTableModel model = new DefaultTableModel();
-    model.setColumnIdentifiers(new Object[] {"User ID", "Name", "Status", "Check-in Time"});
-    
-    List<Attendance> attendanceList = AttendanceDAO.getAttendanceForEvent(eventId);
-    for (Attendance a : attendanceList) {
-        model.addRow(new Object[]{
-            a.getUserId(),      
-            a.getUserName(),
-            a.getStatus(),
-            a.getCheckInTime()
-        });
+    try {
+        List<User> attendees = AttendanceDAO.getAttendeesForEvent(eventId);
+        
+        if (attendees.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No RSVPs found for this event.");
+            return;
+        }
+        
+        // Create simple dialog
+        JDialog attendanceDialog = new JDialog(this, "Event RSVPs - Event ID: " + eventId, true);
+        attendanceDialog.setLayout(new BorderLayout());
+        attendanceDialog.setSize(400, 300);
+        attendanceDialog.setLocationRelativeTo(this);
+        
+        // Create simple table
+        String[] columns = {"Name", "RSVP Status"};
+        DefaultTableModel model = new DefaultTableModel(columns, 0);
+        
+        for (User u : attendees) {
+            model.addRow(new Object[]{
+                u.getName(),
+//                u.getRsvpStatus() // This will show "Yes", "Maybe", or "No"
+            });
+        }
+        
+        JTable table = new JTable(model);
+        JScrollPane scrollPane = new JScrollPane(table);
+        
+        JButton btnClose = new JButton("Close");
+        btnClose.addActionListener(e -> attendanceDialog.dispose());
+        
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(btnClose);
+        
+        attendanceDialog.add(scrollPane, BorderLayout.CENTER);
+        attendanceDialog.add(buttonPanel, BorderLayout.SOUTH);
+        attendanceDialog.setVisible(true);
+        
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error loading RSVPs: " + e.getMessage());
     }
-
-    tblEvents.setModel(model);
-
-    // Hide User ID column visually
-    tblEvents.getColumnModel().getColumn(0).setMinWidth(0);
-    tblEvents.getColumnModel().getColumn(0).setMaxWidth(0);
-    tblEvents.getColumnModel().getColumn(0).setWidth(0);
 }
-
-
 
     // Default constructor (keep for design view)
     public LeaderDashboard() {
@@ -274,14 +416,20 @@ private void populateAttendanceTable(int eventId) {
         dateChooserEventDate = new com.toedter.calendar.JDateChooser();
         btnMarkAttendance = new javax.swing.JButton();
         comboRoom = new javax.swing.JComboBox<>();
+        requestBudgetCheckbox = new javax.swing.JCheckBox();
+        btnFilterEventsbyCalender = new javax.swing.JButton();
+        btnrefresh = new javax.swing.JButton();
         jPanel4 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         tblBudgetRequests = new javax.swing.JTable();
         btnRequestBudget = new javax.swing.JButton();
+        cmbEvents = new javax.swing.JComboBox<>();
+        btnViewExpenses = new javax.swing.JButton();
         jPanel5 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         txtAnnouncements = new javax.swing.JTextArea();
         btnSendNotification = new javax.swing.JButton();
+        jTabbedPane2 = new javax.swing.JTabbedPane();
         btnLogout = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -307,7 +455,7 @@ private void populateAttendanceTable(int eventId) {
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(169, 169, 169)
                         .addComponent(btnEditClubDetails)))
-                .addContainerGap(186, Short.MAX_VALUE))
+                .addContainerGap(533, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -355,9 +503,6 @@ private void populateAttendanceTable(int eventId) {
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 414, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 27, Short.MAX_VALUE))
-            .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGap(51, 51, 51)
                 .addComponent(btnApproveMember)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -366,7 +511,8 @@ private void populateAttendanceTable(int eventId) {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGap(130, 130, 130)
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(506, Short.MAX_VALUE))
+            .addComponent(jScrollPane4)
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -430,38 +576,59 @@ private void populateAttendanceTable(int eventId) {
             }
         });
 
+        requestBudgetCheckbox.setText("Request Budget");
+
+        btnFilterEventsbyCalender.setText("filter");
+        btnFilterEventsbyCalender.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnFilterEventsbyCalenderActionPerformed(evt);
+            }
+        });
+
+        btnrefresh.setText("Refresh Events");
+        btnrefresh.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnrefreshActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(btnCreateEvent, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(txtName)
-                    .addComponent(txtDescription, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGap(30, 30, 30)
-                        .addComponent(jLabel4))
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGap(31, 31, 31)
-                        .addComponent(jLabel5))
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGap(28, 28, 28)
-                        .addComponent(jLabel3))
-                    .addComponent(dateChooserEventDate, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(comboRoom, javax.swing.GroupLayout.PREFERRED_SIZE, 112, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGap(65, 65, 65)
-                        .addComponent(btnMarkAttendance, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(requestBudgetCheckbox)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(btnCreateEvent, javax.swing.GroupLayout.PREFERRED_SIZE, 121, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(btnMarkAttendance, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnFilterEventsbyCalender)
+                        .addGap(29, 29, 29)
+                        .addComponent(btnrefresh)
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGap(18, 18, 18)
-                        .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 320, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(57, Short.MAX_VALUE))
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtName, javax.swing.GroupLayout.DEFAULT_SIZE, 329, Short.MAX_VALUE)
+                            .addComponent(txtDescription)
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addGap(30, 30, 30)
+                                .addComponent(jLabel4))
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addGap(31, 31, 31)
+                                .addComponent(jLabel5))
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addGap(28, 28, 28)
+                                .addComponent(jLabel3))
+                            .addComponent(dateChooserEventDate, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(comboRoom, javax.swing.GroupLayout.PREFERRED_SIZE, 112, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 447, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -483,11 +650,14 @@ private void populateAttendanceTable(int eventId) {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(comboRoom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jScrollPane3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnCreateEvent)
-                    .addComponent(btnMarkAttendance))
-                .addGap(109, 109, 109))
+                    .addComponent(btnMarkAttendance)
+                    .addComponent(requestBudgetCheckbox)
+                    .addComponent(btnFilterEventsbyCalender)
+                    .addComponent(btnrefresh))
+                .addGap(115, 115, 115))
         );
 
         jTabbedPane1.addTab("Events", jPanel3);
@@ -512,27 +682,40 @@ private void populateAttendanceTable(int eventId) {
             }
         });
 
+        btnViewExpenses.setText("View Expenses");
+        btnViewExpenses.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnViewExpensesActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 414, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(21, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(cmbEvents, javax.swing.GroupLayout.PREFERRED_SIZE, 121, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
                 .addComponent(btnRequestBudget)
-                .addGap(154, 154, 154))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(btnViewExpenses)
+                .addGap(47, 47, 47))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
+                .addGap(0, 0, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 616, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
-                .addContainerGap(169, Short.MAX_VALUE)
+                .addContainerGap()
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(btnRequestBudget)
-                .addGap(11, 11, 11))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmbEvents, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnRequestBudget)
+                    .addComponent(btnViewExpenses))
+                .addContainerGap(180, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Budget", jPanel4);
@@ -560,7 +743,7 @@ private void populateAttendanceTable(int eventId) {
                     .addGroup(jPanel5Layout.createSequentialGroup()
                         .addGap(50, 50, 50)
                         .addComponent(btnSendNotification)))
-                .addContainerGap(201, Short.MAX_VALUE))
+                .addContainerGap(548, Short.MAX_VALUE))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -573,6 +756,7 @@ private void populateAttendanceTable(int eventId) {
         );
 
         jTabbedPane1.addTab("Notifications", jPanel5);
+        jTabbedPane1.addTab("DiscussionBoard", jTabbedPane2);
 
         btnLogout.setText("Logout");
         btnLogout.addActionListener(new java.awt.event.ActionListener() {
@@ -585,14 +769,13 @@ private void populateAttendanceTable(int eventId) {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 427, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(187, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(0, 0, Short.MAX_VALUE)
                 .addComponent(btnLogout)
                 .addContainerGap())
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jTabbedPane1))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -608,22 +791,81 @@ private void populateAttendanceTable(int eventId) {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnEditClubDetailsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditClubDetailsActionPerformed
-        SwingUtilities.invokeLater(() -> new ClubForm().setVisible(true));
+                                                     
+    if (currentClub == null) {
+        JOptionPane.showMessageDialog(this, "No club found to edit.", "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    // Create input fields
+    JTextField txtClubName = new JTextField(currentClub.getName(), 20);
+    JTextArea txtDescription = new JTextArea(currentClub.getDescription(), 4, 20);
+    txtDescription.setLineWrap(true);
+    txtDescription.setWrapStyleWord(true);
+    JScrollPane scrollPane = new JScrollPane(txtDescription);
+
+    // Create panel with form layout
+    JPanel panel = new JPanel(new GridLayout(2, 2, 5, 5));
+    panel.add(new JLabel("Club Name:"));
+    panel.add(txtClubName);
+    panel.add(new JLabel("Description:"));
+    panel.add(scrollPane);
+
+    int result = JOptionPane.showConfirmDialog(this, panel, 
+        "Edit Club Details", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+    if (result == JOptionPane.OK_OPTION) {
+        String newName = txtClubName.getText().trim();
+        String newDescription = txtDescription.getText().trim();
+
+        if (newName.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Club name cannot be empty.", 
+                "Validation Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Update club object
+        currentClub.setName(newName);
+        currentClub.setDescription(newDescription);
+
+        // Save to database
+        boolean success = ClubDAO.updateClubProfile(currentClub);
+        
+        if (success) {
+            JOptionPane.showMessageDialog(this, "Club details updated successfully!", 
+                "Success", JOptionPane.INFORMATION_MESSAGE);
+            
+            // Update UI
+            jLabel2.setText("Club: " + newName + " (" + currentClub.getStatus() + ")");
+            setTitle("Leader Dashboard - " + user.getName() + " | " + newName);
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to update club details.", 
+                "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
 
     }//GEN-LAST:event_btnEditClubDetailsActionPerformed
 
     private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogoutActionPerformed
-  int confirm = JOptionPane.showConfirmDialog(
+int confirm = JOptionPane.showConfirmDialog(
         this, 
         "Are you sure you want to log out?", 
         "Confirm Logout", 
         JOptionPane.YES_NO_OPTION
-    );
+);
 
-    if (confirm == JOptionPane.YES_OPTION) {
-        this.dispose(); // close current dashboard instance
-        new clubconnect.ui.LoginForm().setVisible(true); // open login screen
-    };
+if (confirm == JOptionPane.YES_OPTION) {
+    // Clear the session
+    UserDAO.logout(); 
+
+    // Close current dashboard
+    this.dispose();
+
+    // Open login screen
+    new clubconnect.ui.LoginForm().setVisible(true);
+}
+
     }//GEN-LAST:event_btnLogoutActionPerformed
 
     private void btnApproveMemberActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnApproveMemberActionPerformed
@@ -710,60 +952,71 @@ private void populateAttendanceTable(int eventId) {
     }//GEN-LAST:event_btnRejectMemberActionPerformed
 
     private void btnCreateEventActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCreateEventActionPerformed
-    try {
-        // Gather data from form fields
-        String name = txtName.getText().trim();
-        String description = txtDescription.getText().trim();
-        java.util.Date eventDate = dateChooserEventDate.getDate();
+try {
+    RoomDAO.releaseExpiredRooms(); // release expired rooms
 
-        // Basic validation
-        if (name.isEmpty() || eventDate == null) {
-            JOptionPane.showMessageDialog(this, "Please fill in all required fields.", 
-                                          "Validation Error", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
+    // gather form data
+    String name = txtName.getText().trim();
+    String description = txtDescription.getText().trim();
+    java.util.Date eventDate = dateChooserEventDate.getDate();
 
-        // Validate room selection
-        String selectedRoom = (String) comboRoom.getSelectedItem();
-        if (selectedRoom == null || selectedRoom.startsWith("0 -")) {
-            JOptionPane.showMessageDialog(this, "Please select a room.", 
-                                          "Validation Error", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        // Parse room ID
-        String[] parts = selectedRoom.split(" - ", 2);
-        int roomId = Integer.parseInt(parts[0].trim());
-
-        // Use clubId from the dashboard instance
-        int clubId = this.clubId;
-
-        // Create Event object
-        Event event = new Event(0, clubId, name, description, eventDate, roomId);
-
-        // Save to database
-        boolean success = EventDAO.createEvent(event, clubId);
-
-        if (success) {
-            JOptionPane.showMessageDialog(this, "Event created successfully!");
-            // Clear form fields
-            txtName.setText("");
-            txtDescription.setText("");
-            dateChooserEventDate.setDate(null);
-            comboRoom.setSelectedIndex(0);
-        } else {
-            JOptionPane.showMessageDialog(this, "Failed to create event.", 
-                                          "Error", JOptionPane.ERROR_MESSAGE);
-        }
-
-    } catch (NumberFormatException nfe) {
-        JOptionPane.showMessageDialog(this, "Invalid room selection.", 
+    if (name.isEmpty() || eventDate == null) {
+        JOptionPane.showMessageDialog(this, "Please fill in all required fields.",
                                       "Validation Error", JOptionPane.WARNING_MESSAGE);
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), 
-                                      "Exception", JOptionPane.ERROR_MESSAGE);
-        e.printStackTrace();
+        return;
     }
+
+    // validate room selection
+    String selectedRoom = (String) comboRoom.getSelectedItem();
+    if (selectedRoom == null || selectedRoom.startsWith("0 -")) {
+        JOptionPane.showMessageDialog(this, "Please select a room.",
+                                      "Validation Error", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+
+    int roomId = Integer.parseInt(selectedRoom.split(" - ")[0].trim());
+
+    // check room availability
+    if (!RoomDAO.isRoomAvailable(roomId, eventDate)) {
+        JOptionPane.showMessageDialog(this, "Selected room is already booked. Please choose another room.",
+                                      "Validation Error", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+
+    Event event = new Event(0, this.clubId, name, description, eventDate, roomId);
+    int eventId = EventDAO.createEvent(event, this.clubId);
+
+    if (eventId > 0) {
+        RoomDAO.markRoomAsBooked(roomId);
+        JOptionPane.showMessageDialog(this, "Event created and room booked successfully!");
+         populateEventTable();
+
+        if (requestBudgetCheckbox.isSelected()) {
+            BudgetRequestDialog dialog = new BudgetRequestDialog(this, this.clubId, eventId);
+            dialog.setVisible(true);
+            BudgetRequest br = dialog.getBudgetRequest();
+            if (br != null && BudgetDAO.submitBudgetRequest(br)) {
+                JOptionPane.showMessageDialog(this, "Budget request submitted successfully!");
+            }
+        }
+
+        // clear form
+        txtName.setText("");
+        txtDescription.setText("");
+        dateChooserEventDate.setDate(null);
+        comboRoom.setSelectedIndex(0);
+        requestBudgetCheckbox.setSelected(false);
+
+    } else {
+        JOptionPane.showMessageDialog(this, "Failed to create event.", "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+} catch (NumberFormatException nfe) {
+    JOptionPane.showMessageDialog(this, "Invalid room selection.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+} catch (Exception e) {
+    JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Exception", JOptionPane.ERROR_MESSAGE);
+    e.printStackTrace();
+}
     }//GEN-LAST:event_btnCreateEventActionPerformed
 
     private void txtDescriptionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtDescriptionActionPerformed
@@ -780,46 +1033,6 @@ if (selected != null && !selected.startsWith("0 -")) { // skip placeholder
 }
        // TODO add your handling code here:
     }//GEN-LAST:event_comboRoomActionPerformed
-
-    private void btnSendNotificationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSendNotificationActionPerformed
-        try {
-        // Make sure a user is logged in
-        if (user == null) {
-            JOptionPane.showMessageDialog(this, "User not logged in.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        // Make sure clubId is set (leader's club)
-        if (clubId <= 0) {
-            JOptionPane.showMessageDialog(this, "Club ID not set.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        // Get the message text
-        String message = txtAnnouncements.getText().trim();
-        if (message.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter a message.", "Validation Error", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        // Create notification with userId and clubId
-        Notification notification = new Notification(user.getUserId(), message, clubId);
-
-        // Insert into DB
-        boolean success = NotificationDAO.createNotification(notification);
-
-        if (success) {
-            JOptionPane.showMessageDialog(this, "Notification sent!");
-            txtAnnouncements.setText("");
-        } else {
-            JOptionPane.showMessageDialog(this, "Failed to send notification.", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-
-    } catch (Exception e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Exception", JOptionPane.ERROR_MESSAGE);
-    }
-    }//GEN-LAST:event_btnSendNotificationActionPerformed
 
 
     private void btnMarkAttendanceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMarkAttendanceActionPerformed
@@ -846,40 +1059,196 @@ if (selected != null && !selected.startsWith("0 -")) { // skip placeholder
     }//GEN-LAST:event_btnMarkAttendanceActionPerformed
 
     private void btnRequestBudgetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRequestBudgetActionPerformed
-        String description = JOptionPane.showInputDialog(this, "Enter budget description:");
-if (description == null || description.trim().isEmpty()) return;
+   String description = JOptionPane.showInputDialog(this, "Enter budget description:");
+    if (description == null || description.trim().isEmpty()) return;
 
-String amountStr = JOptionPane.showInputDialog(this, "Enter requested amount:");
-if (amountStr == null || amountStr.trim().isEmpty()) return;
+    String amountStr = JOptionPane.showInputDialog(this, "Enter requested amount:");
+    if (amountStr == null || amountStr.trim().isEmpty()) return;
 
-try {
-    double amount = Double.parseDouble(amountStr);
-    Club club = ClubDAO.getClubByLeaderId(user.getUserId());
+    try {
+        double amount = Double.parseDouble(amountStr);
+        Club club = ClubDAO.getClubByLeaderId(user.getUserId());
 
-    if (club == null) {
-        JOptionPane.showMessageDialog(this, "No club found for your account.");
-        return;
+        if (club == null) {
+            JOptionPane.showMessageDialog(this, "No club found for your account.");
+            return;
+        }
+
+        //  Get selected event ID from combo box
+        int eventId = 0; // Default to no event
+        if (cmbEvents.getSelectedItem() != null) {
+            String selected = cmbEvents.getSelectedItem().toString(); 
+            // Assuming item format: "eventId - eventName"
+            eventId = Integer.parseInt(selected.split(" - ")[0]);
+        }
+
+        //  Create budget request
+        BudgetRequest budgetRequest = new BudgetRequest(
+            club.getClubId(),
+            eventId,   
+            amount,
+            description
+        );
+
+        // ✅Submit and notify user
+        if (BudgetDAO.submitBudgetRequest(budgetRequest)) {
+            JOptionPane.showMessageDialog(this, 
+                "Budget request submitted for approval.");
+        } else {
+            JOptionPane.showMessageDialog(this, 
+                "Error submitting budget request.");
+             loadBudgetRequests();
+        }
+
+    } catch (NumberFormatException e) {
+        JOptionPane.showMessageDialog(this, 
+            "Invalid amount entered. Please enter a valid number.");
     }
-
-    // Create new budget request linked to the leader's club
-    BudgetRequest budgetRequest = new BudgetRequest(
-        club.getClubId(),
-        0, // no event linked
-        amount,
-        description
-    );
-
-    if (BudgetDAO.submitBudgetRequest(budgetRequest)) {
-        JOptionPane.showMessageDialog(this, "Budget request submitted for approval.");
-    } else {
-        JOptionPane.showMessageDialog(this, "Error submitting budget request.");
-    }
-
-} catch (NumberFormatException e) {
-    JOptionPane.showMessageDialog(this, "Invalid amount entered. Please enter a valid number.");
-}
 
     }//GEN-LAST:event_btnRequestBudgetActionPerformed
+
+    private void btnFilterEventsbyCalenderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFilterEventsbyCalenderActionPerformed
+                                                         
+    try {
+        // Fetch all events for this club
+        List<Event> events = EventDAO.getAllEvents(this.clubId);
+
+        // Create the dialog
+        JDialog calendarDialog = new JDialog(this, "Event Calendar", true);
+        calendarDialog.setSize(800, 600);
+        calendarDialog.setLocationRelativeTo(this);
+
+        // Create tabbed pane for Today, Week, Month
+        JTabbedPane tabbedPane = new JTabbedPane();
+
+        // TODAY tab
+        JPanel todayPanel = new JPanel(new BorderLayout());
+        LocalDate today = LocalDate.now();
+        DefaultListModel<String> todayListModel = new DefaultListModel<>();
+        for (Event e : events) {
+            LocalDate eventDate = e.getEventDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            if (eventDate.equals(today)) {
+                todayListModel.addElement(e.getName() + " (" + e.getRoomId() + ")");
+            }
+        }
+        JList<String> todayList = new JList<>(todayListModel);
+        todayPanel.add(new JScrollPane(todayList), BorderLayout.CENTER);
+        tabbedPane.addTab("Today", todayPanel);
+
+        // WEEK tab
+        JPanel weekPanel = new JPanel(new BorderLayout());
+        LocalDate startOfWeek = today.with(DayOfWeek.MONDAY);
+        LocalDate endOfWeek = today.with(DayOfWeek.SUNDAY);
+        DefaultListModel<String> weekListModel = new DefaultListModel<>();
+        for (Event e : events) {
+            LocalDate eventDate = e.getEventDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            if (!eventDate.isBefore(startOfWeek) && !eventDate.isAfter(endOfWeek)) {
+                weekListModel.addElement(eventDate + " - " + e.getName() + " (" + e.getRoomId() + ")");
+            }
+        }
+        JList<String> weekList = new JList<>(weekListModel);
+        weekPanel.add(new JScrollPane(weekList), BorderLayout.CENTER);
+        tabbedPane.addTab("Week", weekPanel);
+
+        // MONTH tab
+        JPanel monthPanel = new JPanel(new BorderLayout());
+        YearMonth currentMonth = YearMonth.now();
+        DefaultListModel<String> monthListModel = new DefaultListModel<>();
+        for (Event e : events) {
+            LocalDate eventDate = e.getEventDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            YearMonth eventMonth = YearMonth.from(eventDate);
+            if (eventMonth.equals(currentMonth)) {
+                monthListModel.addElement(eventDate + " - " + e.getName() + " (" + e.getRoomId() + ")");
+            }
+        }
+        JList<String> monthList = new JList<>(monthListModel);
+        monthPanel.add(new JScrollPane(monthList), BorderLayout.CENTER);
+        tabbedPane.addTab("Month", monthPanel);
+
+        calendarDialog.add(tabbedPane);
+        calendarDialog.setVisible(true);
+
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Error loading calendar: " + e.getMessage(),
+                                      "Error", JOptionPane.ERROR_MESSAGE);
+        e.printStackTrace();
+    }
+
+
+    }//GEN-LAST:event_btnFilterEventsbyCalenderActionPerformed
+
+    private void btnViewExpensesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnViewExpensesActionPerformed
+       
+    int selectedBudgetId = 1; // get from selection in your budget table/list
+    BudgetExpenseDialog dialog = new BudgetExpenseDialog(this, selectedBudgetId);
+    dialog.setVisible(true);
+
+
+    }//GEN-LAST:event_btnViewExpensesActionPerformed
+
+    private void btnSendNotificationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSendNotificationActionPerformed
+
+        try {
+            // 1️⃣ Ensure user is logged in
+            if (user == null) {
+                JOptionPane.showMessageDialog(this, "User not logged in.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // 2️⃣ Ensure clubId is valid
+            if (clubId <= 0) {
+                JOptionPane.showMessageDialog(this, "Club ID not set.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // 3️⃣ Get message
+            String message = txtAnnouncements.getText().trim();
+            if (message.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please enter a message.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // 4️⃣ Fetch all active members of this club
+            List<User> members = UserDAO.getUsersByClubId(clubId);
+
+            if (members.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No active members found to notify.", "Info", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            // 5️⃣ Send notification to each member
+            int successCount = 0;
+            for (User member : members) {
+                boolean sent = NotificationService.notifyUser(
+                    member.getUserId(),
+                    member.getEmail(),
+                    member.getName(),
+                    clubId,
+                    getClubName(clubId), // implement this to get club name by ID
+                    message
+                );
+                if (sent) successCount++;
+            }
+
+            // 6️⃣ Show result
+            JOptionPane.showMessageDialog(this,
+                String.format("Notification sent to %d/%d members!", successCount, members.size()),
+                "Success", JOptionPane.INFORMATION_MESSAGE);
+
+            // 7️⃣ Clear input
+            txtAnnouncements.setText("");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error sending notifications: " + e.getMessage(),
+                "Exception", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_btnSendNotificationActionPerformed
+
+    private void btnrefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnrefreshActionPerformed
+        // TODO add your handling code here:
+         populateEventTable();
+    }//GEN-LAST:event_btnrefreshActionPerformed
 
 
     /**
@@ -921,11 +1290,15 @@ try {
     private javax.swing.JButton btnApproveMember;
     private javax.swing.JButton btnCreateEvent;
     private javax.swing.JButton btnEditClubDetails;
+    private javax.swing.JButton btnFilterEventsbyCalender;
     private javax.swing.JButton btnLogout;
     private javax.swing.JButton btnMarkAttendance;
     private javax.swing.JButton btnRejectMember;
     private javax.swing.JButton btnRequestBudget;
     private javax.swing.JButton btnSendNotification;
+    private javax.swing.JButton btnViewExpenses;
+    private javax.swing.JButton btnrefresh;
+    private javax.swing.JComboBox<String> cmbEvents;
     private javax.swing.JComboBox<String> comboRoom;
     private com.toedter.calendar.JDateChooser dateChooserEventDate;
     private com.toedter.calendar.JDateChooser jDateChooser1;
@@ -944,6 +1317,8 @@ try {
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JTabbedPane jTabbedPane2;
+    private javax.swing.JCheckBox requestBudgetCheckbox;
     private javax.swing.JTable tblBudgetRequests;
     private javax.swing.JTable tblEvents;
     private javax.swing.JTable tblMembers;

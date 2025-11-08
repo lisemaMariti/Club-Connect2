@@ -74,7 +74,7 @@ public class RegisterForm extends javax.swing.JFrame {
             }
         });
 
-        cbRole.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Admin", "Leader", "Member" }));
+        cbRole.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Leader", "Member" }));
 
         jLabel6.setText("Role");
 

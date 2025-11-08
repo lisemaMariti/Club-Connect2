@@ -15,29 +15,34 @@ public class BudgetDAO {
     // ==============================
     // Submit a new budget request (Leader)
     // ==============================
-    public static boolean submitBudgetRequest(BudgetRequest br) {
-        String sql = """
-                INSERT INTO budgets (club_id, event_id, description, amount, status, created_at)
-                VALUES (?, ?, ?, ?, 'Pending', NOW())
-                """;
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+  public static boolean submitBudgetRequest(BudgetRequest br) {
+    String sql = """
+            INSERT INTO budgets (club_id, event_id, description, amount, status, created_at)
+            VALUES (?, ?, ?, ?, 'Pending', NOW())
+            """;
+    try (Connection conn = DBManager.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setInt(1, br.getClubId());
-            if (br.getEventId() > 0) {
-                ps.setInt(2, br.getEventId());
-            } else {
-                ps.setNull(2, java.sql.Types.INTEGER);
-            }
-            ps.setString(3, br.getPurpose());
-            ps.setDouble(4, br.getAmount());
-
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            System.err.println("❌ Error submitting budget request: " + e.getMessage());
-            return false;
+        ps.setInt(1, br.getClubId());
+        if (br.getEventId() > 0) {
+            ps.setInt(2, br.getEventId());
+        } else {
+            ps.setNull(2, java.sql.Types.INTEGER);
         }
+        ps.setString(3, br.getPurpose());
+        ps.setDouble(4, br.getAmount());
+
+        int rows = ps.executeUpdate();
+        if (rows > 0) {
+            System.out.println("✅ Budget request submitted successfully for club_id=" + br.getClubId());
+            return true;
+        }
+    } catch (SQLException e) {
+        System.err.println("❌ Error submitting budget request: " + e.getMessage());
     }
+    return false;
+}
+
 
     // ==============================
     // Update budget status (Admin)
@@ -252,4 +257,5 @@ public class BudgetDAO {
             return false;
         }
     }
+    
 }

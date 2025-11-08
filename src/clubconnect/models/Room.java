@@ -6,29 +6,24 @@ package clubconnect.models;
 
 public class Room {
     private int roomId;
-    private String RoomName;
+    private String roomName;
     private int capacity;
+    private String status; // store status too
 
-    public Room(int roomId, String RoomName, int capacity) {
+    public Room(int roomId, String roomName, int capacity, String status) {
         this.roomId = roomId;
-        this.RoomName = RoomName;
+        this.roomName = roomName;
         this.capacity = capacity;
-    }
-
-    public Room(String name, int capacity) {
-        this(0, name, capacity);
+        this.status = status;
     }
 
     public int getRoomId() { return roomId; }
-    public void setRoomId(int roomId) { this.roomId = roomId; }
-
-    public String getRoomName() { return RoomName; }
-    public void setName(String RoomName) { this.RoomName = RoomName; }
-
+    public String getRoomName() { return roomName; }
     public int getCapacity() { return capacity; }
-    public void setCapacity(int capacity) { this.capacity = capacity; }
+    public String getStatus() { return status; }
 
     @Override
-    public String toString() { return RoomName + " (" + capacity + ")"; }
+    public String toString() { 
+        return roomName + " (" + capacity + ")"; 
+    }
 }
-

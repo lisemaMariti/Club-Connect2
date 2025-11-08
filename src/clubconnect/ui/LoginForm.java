@@ -5,6 +5,10 @@
 package clubconnect.ui;
 
 import clubconnect.dao.ClubDAO;
+import clubconnect.dao.UserDAO;
+import clubconnect.models.Club;
+import clubconnect.models.User;
+import clubconnect.services.AuthService;
 import javax.swing.JOptionPane;
 
 /**
@@ -36,6 +40,7 @@ public class LoginForm extends javax.swing.JFrame {
         btnRegister = new javax.swing.JButton();
         jLabel3 = new javax.swing.JLabel();
         txtPassword = new javax.swing.JPasswordField();
+        jLabel4 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -65,6 +70,13 @@ public class LoginForm extends javax.swing.JFrame {
             }
         });
 
+        jLabel4.setText("Forgot password?");
+        jLabel4.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jLabel4MouseClicked(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -79,14 +91,17 @@ public class LoginForm extends javax.swing.JFrame {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel3)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                .addGroup(layout.createSequentialGroup()
-                                    .addComponent(btnLogin)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 106, Short.MAX_VALUE)
-                                    .addComponent(btnRegister))
-                                .addComponent(txtEmail, javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(txtPassword, javax.swing.GroupLayout.Alignment.LEADING)))))
-                .addGap(77, 77, 77))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(btnLogin)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 106, Short.MAX_VALUE)
+                                        .addComponent(btnRegister))
+                                    .addComponent(txtEmail, javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(txtPassword, javax.swing.GroupLayout.Alignment.LEADING))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -100,7 +115,9 @@ public class LoginForm extends javax.swing.JFrame {
                 .addGap(6, 6, 6)
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(txtPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel4))
                 .addGap(33, 33, 33)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnRegister)
@@ -111,66 +128,55 @@ public class LoginForm extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
-     String email = txtEmail.getText().trim();
-    String password = new String(txtPassword.getPassword());
+    String email = txtEmail.getText().trim();
+String password = new String(txtPassword.getPassword());
 
-    // Validate inputs
-    if (email.isEmpty() || password.isEmpty()) {
-        JOptionPane.showMessageDialog(this, "Please enter both email and password!");
-        return;
-    }
+// Validate inputs
+if (email.isEmpty() || password.isEmpty()) {
+    JOptionPane.showMessageDialog(this, "Please enter both email and password!");
+    return;
+}
 
-    // Attempt login (UserDAO.login should query the 'users' table)
-    var user = clubconnect.dao.UserDAO.login(email, password);
+// Attempt login
+User user = UserDAO.login(email, password);
 
-    if (user != null) {
-//        JOptionPane.showMessageDialog(this, "Welcome, " + user.getName() + "!");
-        this.dispose(); // Close the login form
+if (user != null) {
+    // Store globally
+    AuthService.setLoggedInUser(user);
+
+    this.dispose(); // Close the login form
 
     switch (user.getRole()) {
-    case "Admin" -> {
-        // Check if there are any pending clubs
-        boolean hasPendingClubs = ClubDAO.hasPendingClubs();
+        case "Admin" -> {
+            // Open admin dashboard
+            AdminDashboard dashboard = new AdminDashboard(user);
+            dashboard.setVisible(true);
+        }
 
-//        if (hasPendingClubs) {
-//            JOptionPane.showMessageDialog(null,
-//                "There are pending clubs awaiting approval.",
-//                "Pending Clubs",
-//                JOptionPane.INFORMATION_MESSAGE);
-//
-//            // Redirect admin to the ClubForm view
-//            new clubconnect.ui.ClubForm(user).setVisible(true);
-//        } else {
-            // No pending clubs → go to admin dashboard
-            new clubconnect.ui.AdminDashboard(user).setVisible(true);
-//        }
-    
-    }
-case "Leader" -> {
-    // Check if the leader already has a club
-    boolean hasClub = ClubDAO.doesLeaderHaveClub(user.getUserId());
-
-    if (hasClub) {
-        // Redirect to Leader Dashboard
-        new clubconnect.ui.LeaderDashboard(user).setVisible(true);
-    } else {
-        // Redirect to Club creation form
-        new clubconnect.ui.ClubForm(user).setVisible(true);
-    }
-}
-            case "Member" -> {
-                new clubconnect.ui.MemberDashboard(user).setVisible(true);
-            }
-            default -> {
-                JOptionPane.showMessageDialog(this, 
-                    "Unknown role: " + user.getRole(), 
-                    "Login Error", 
-                    JOptionPane.ERROR_MESSAGE);
+        case "Leader" -> {
+            // Check if leader already has a club
+            Club leaderClub = ClubDAO.getClubByLeaderId(user.getUserId());
+            if (leaderClub != null) {
+                new LeaderDashboard(user).setVisible(true);
+            } else {
+                new ClubForm(user).setVisible(true);
             }
         }
-    } else {
-        JOptionPane.showMessageDialog(this, "Invalid login credentials!");
+
+        case "Member" -> {
+            new MemberDashboard(user).setVisible(true);
+        }
+
+        default -> {
+            JOptionPane.showMessageDialog(this,
+                "Unknown role: " + user.getRole(),
+                "Login Error",
+                JOptionPane.ERROR_MESSAGE);
+        }
     }
+} else {
+    JOptionPane.showMessageDialog(this, "Invalid login credentials or inactive account!");
+}
 
     }//GEN-LAST:event_btnLoginActionPerformed
 
@@ -182,6 +188,16 @@ case "Leader" -> {
          this.dispose();
         new clubconnect.ui.RegisterForm().setVisible(true);
     }//GEN-LAST:event_btnRegisterActionPerformed
+
+    private void jLabel4MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel4MouseClicked
+        clubconnect.ui.ForgotPassword forgotPasswordForm = new clubconnect.ui.ForgotPassword();
+    
+   
+    forgotPasswordForm.setVisible(true);
+    
+   
+    this.dispose();
+    }//GEN-LAST:event_jLabel4MouseClicked
 
     /**
      * @param args the command line arguments
@@ -224,6 +240,7 @@ case "Leader" -> {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JTextField txtEmail;
     private javax.swing.JPasswordField txtPassword;
     // End of variables declaration//GEN-END:variables

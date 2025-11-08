@@ -5,6 +5,9 @@
 package clubconnect;
 
 import clubconnect.db.DBManager;
+import clubconnect.db.DatabaseSeeder;
+import clubconnect.services.EventNotificationService;
+import clubconnect.ui.Home;
 import clubconnect.ui.LoginForm;
 import javax.swing.*;
 /**
@@ -16,10 +19,15 @@ public class ClubConnect {
     /**
      * @param args the command line arguments
      */
-     public static void main(String[] args) {
-        DBManager.initializeDatabase();
-        SwingUtilities.invokeLater(() -> new LoginForm().setVisible(true));
-    }
+    public static void main(String[] args) {
+    DBManager.initializeDatabase(); // Keep database setup
+
+    SwingUtilities.invokeLater(() -> new Home().setVisible(true)); 
+    DatabaseSeeder.seedAdminUser();
+    EventNotificationService.sendUpcomingEventReminders();
+
+}
+
 
     
     }

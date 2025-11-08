@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package clubconnect.models;
 
 public class Club {
@@ -10,16 +6,31 @@ public class Club {
     private String description;
     private String status;
     private int leaderId;
+    private String leaderName; // optional
+    private int memberCount;
+    private int upcomingEvents;
+   
 
-    public Club(int clubId, String name, String description, String status, int leaderId) {
+    public Club() {}
+
+    // Constructor with metrics
+    public Club(int clubId, String name, String description, String status, int leaderId,
+                int memberCount, int upcomingEvents) {
         this.clubId = clubId;
         this.name = name;
         this.description = description;
         this.status = status;
         this.leaderId = leaderId;
+        this.memberCount = memberCount;
+        this.upcomingEvents = upcomingEvents;
     }
 
-    // Getters and setters
+    // Constructor without metrics
+    public Club(int clubId, String name, String description, String status, int leaderId) {
+        this(clubId, name, description, status, leaderId, 0, 0);
+    }
+
+    // --- Getters & Setters ---
     public int getClubId() { return clubId; }
     public void setClubId(int clubId) { this.clubId = clubId; }
 
@@ -34,4 +45,27 @@ public class Club {
 
     public int getLeaderId() { return leaderId; }
     public void setLeaderId(int leaderId) { this.leaderId = leaderId; }
+
+    public String getLeaderName() { return leaderName; }
+    public void setLeaderName(String leaderName) { this.leaderName = leaderName; }
+
+    public int getMemberCount() { return memberCount; }
+    public void setMemberCount(int memberCount) { this.memberCount = memberCount; }
+
+    public int getUpcomingEvents() { return upcomingEvents; }
+    public void setUpcomingEvents(int upcomingEvents) { this.upcomingEvents = upcomingEvents; }
+
+    // --- Helper Methods ---
+    public boolean isApproved() {
+        return "Approved".equalsIgnoreCase(status);
+    }
+
+    public boolean isPending() {
+        return "Pending".equalsIgnoreCase(status);
+    }
+
+    @Override
+    public String toString() {
+        return name + " (" + status + ")";
+    }
 }

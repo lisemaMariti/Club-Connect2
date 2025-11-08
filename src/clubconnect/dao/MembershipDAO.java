@@ -6,12 +6,18 @@ package clubconnect.dao;
 
 import clubconnect.db.DBManager;
 import clubconnect.models.Membership;
+import clubconnect.utils.CSVExporter;
+import java.io.IOException;
 import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import javax.swing.JOptionPane;
 
 public class MembershipDAO {
 
@@ -141,9 +147,47 @@ public static List<Map<String, Object>> getAttendanceSummary() {
 
     return list;
 }
+   public static List<String[]> getAllMembersForCSV() {
+        List<String[]> list = new ArrayList<>();
+        String sql = "SELECT c.name AS club_name, u.user_id, u.name AS user_name, u.email, m.status, m.joined_at " +
+                     "FROM memberships m " +
+                     "JOIN users u ON m.user_id = u.user_id " +
+                     "JOIN clubs c ON m.club_id = c.club_id " +
+                     "ORDER BY c.name, u.user_id";
 
+        try (Connection conn = DBManager.getConnection();
+             Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
 
+            Set<String> seen = new HashSet<>();
 
+            while (rs.next()) {
+                String clubName = rs.getString("club_name");
+                String userId = String.valueOf(rs.getInt("user_id"));
+                String key = clubName + "-" + userId;
+
+                if (seen.contains(key)) continue;
+                seen.add(key);
+
+                list.add(new String[]{
+                    clubName,
+                    userId,
+                    rs.getString("user_name"),
+                    rs.getString("email"),
+                    rs.getString("status"),
+                    rs.getString("joined_at")
+                });
+            }
+System.out.println("Rows to export:");
+for (String[] row : list) {
+    System.out.println(java.util.Arrays.toString(row));
+}
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
 
 
 

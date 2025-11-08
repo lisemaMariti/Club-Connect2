@@ -47,8 +47,10 @@ CREATE TABLE IF NOT EXISTS memberships (
 CREATE TABLE IF NOT EXISTS rooms (
     room_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
-    capacity INT DEFAULT 30
+    capacity INT DEFAULT 30,
+    status ENUM('Available', 'Booked') DEFAULT 'Available'
 );
+
 
 -- Events Table
 CREATE TABLE IF NOT EXISTS events (
@@ -131,3 +133,52 @@ CREATE TABLE IF NOT EXISTS event_waitlist_notifications (
     notified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (rsvp_id) REFERENCES event_rsvps(rsvp_id)
 	);
+	CREATE TABLE IF NOT EXISTS expenses (
+    expense_id INT AUTO_INCREMENT PRIMARY KEY,
+    budget_id INT NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    expense_date DATE DEFAULT CURRENT_DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (budget_id) REFERENCES budgets(budget_id)
+        ON DELETE CASCADE
+);
+	
+CREATE TABLE IF NOT EXISTS tokens (
+    token_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    token_hash VARCHAR(255) NOT NULL,
+    is_used BOOLEAN DEFAULT FALSE,
+    is_expired BOOLEAN DEFAULT FALSE,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE IF NOT EXISTS comments (
+    comment_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,                     
+    club_id INT DEFAULT NULL,                 
+    event_id INT DEFAULT NULL,                
+    parent_comment_id INT DEFAULT NULL,       
+    content TEXT NOT NULL,                    
+    status ENUM('visible','hidden','deleted') DEFAULT 'visible', -- for moderation
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (club_id) REFERENCES clubs(club_id) ON DELETE CASCADE,
+    FOREIGN KEY (event_id) REFERENCES events(event_id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_comment_id) REFERENCES comments(comment_id) ON DELETE CASCADE
+);
+
+CREATE TABLE  IF NOT EXISTS comment_likes (
+    comment_id INT NOT NULL,
+    user_id INT NOT NULL,
+    PRIMARY KEY (comment_id, user_id),
+    FOREIGN KEY (comment_id) REFERENCES comments(comment_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+
+
+
